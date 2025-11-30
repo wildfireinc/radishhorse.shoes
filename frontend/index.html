@@ -139,21 +139,26 @@
         let localStream = null;
         
         // Override callback to initialize camera AFTER initCamera is defined
+        // Store original callback (defined in head)
         const originalSuccess = window.onTurnstileSuccess;
+        
+        // Create new callback that does both UI and camera
         window.onTurnstileSuccess = function(token) {
             // Call original first (handles gate/main content)
-            if (originalSuccess) {
+            if (originalSuccess && originalSuccess !== window.onTurnstileSuccess) {
                 originalSuccess(token);
             }
             turnstileToken = token || window.turnstileToken;
             
             // Now initialize camera - this function is defined below
             setTimeout(() => {
-                showCameraStatus('initializing camera...', false);
-                initCamera().catch(err => {
-                    showCameraStatus('error: camera initialization failed', true);
-                });
-            }, 300);
+                if (!localStream) {
+                    showCameraStatus('initializing camera...', false);
+                    initCamera().catch(err => {
+                        showCameraStatus('error: camera initialization failed', true);
+                    });
+                }
+            }, 400);
         };
 
         function showCameraStatus(msg, isError = false) {
