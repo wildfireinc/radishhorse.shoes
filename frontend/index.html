@@ -6,12 +6,28 @@
     <title>radishhorse.shoes</title>
     <link rel="stylesheet" href="styles.css">
     <script>
-        // Backend API server
+        // Default backend (will be updated from API config)
         window.BACKEND_URL = 'https://api.radishhorse.shoes';
         window.API_BASE = 'https://api.radishhorse.shoes';
         window.SOCKET_URL = 'https://api.radishhorse.shoes';
-        // Turnstile site key (can be overridden via Vercel env var TURNSTILE_SITE_KEY)
         window.TURNSTILE_SITE_KEY = '0x4AAAAAACD2gD3et3LnZ5PS';
+        
+        // Fetch backend configuration
+        (async function() {
+            try {
+                const response = await fetch('https://api.radishhorse.shoes/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    if (config.apiUrl) window.API_BASE = config.apiUrl;
+                    if (config.socketUrl) window.SOCKET_URL = config.socketUrl;
+                    if (config.backendUrl) window.BACKEND_URL = config.backendUrl;
+                    if (config.turnstileSiteKey) window.TURNSTILE_SITE_KEY = config.turnstileSiteKey;
+                    console.log('Backend config loaded:', config);
+                }
+            } catch (err) {
+                console.warn('Failed to load backend config, using defaults:', err);
+            }
+        })();
     </script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -59,12 +75,15 @@
 
     <script src="webrtc.js"></script>
     <script>
-        // Set Turnstile site key
+        // Set Turnstile site key (wait for config to load)
         document.addEventListener('DOMContentLoaded', function() {
-            const turnstileWidget = document.getElementById('turnstileWidget');
-            if (turnstileWidget) {
-                turnstileWidget.setAttribute('data-sitekey', window.TURNSTILE_SITE_KEY || '0x4AAAAAACD2gD3et3LnZ5PS');
-            }
+            // Wait a bit for config to load, then set Turnstile
+            setTimeout(() => {
+                const turnstileWidget = document.getElementById('turnstileWidget');
+                if (turnstileWidget) {
+                    turnstileWidget.setAttribute('data-sitekey', window.TURNSTILE_SITE_KEY || '0x4AAAAAACD2gD3et3LnZ5PS');
+                }
+            }, 100);
         });
 
         let turnstileToken = null;
