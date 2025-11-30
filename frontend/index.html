@@ -156,6 +156,8 @@
                 }
             } catch (err) {
                 console.error('Error accessing camera:', err);
+                showStatus('camera error: ' + err.message);
+                setTimeout(hideStatus, 5000);
             }
         }
         
@@ -165,7 +167,9 @@
             if (originalSuccess) originalSuccess(token);
             turnstileToken = token || window.turnstileToken;
             // Initialize camera immediately
-            initCamera();
+            setTimeout(() => {
+                initCamera();
+            }, 200);
         };
 
         // Room creation
@@ -178,6 +182,7 @@
                 createRoomStatus.textContent = msg;
                 createRoomStatus.style.display = 'block';
             }
+            console.log('Status:', msg);
         }
         
         function hideStatus() {
@@ -187,7 +192,9 @@
         }
         
         if (!createRoomForm) {
-            showStatus('error: form not found');
+            console.error('Create room form not found!');
+        } else {
+            console.log('Create room form found, attaching handler');
         }
         
         if (createRoomForm) {
