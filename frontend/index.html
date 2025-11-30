@@ -14,11 +14,7 @@
         
         // Define Turnstile callbacks BEFORE script loads
         window.onTurnstileSuccess = function(token) {
-            console.log('=== TURNSTILE SUCCESS CALLBACK FIRED ===');
-            console.log('Token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
-            
             if (!token) {
-                console.error('Turnstile returned empty token');
                 if (window.turnstile) {
                     window.turnstile.reset();
                 }
@@ -31,17 +27,11 @@
             const gate = document.getElementById('turnstileGate');
             const main = document.getElementById('mainContent');
             
-            console.log('Gate found:', !!gate);
-            console.log('Main found:', !!main);
-            
             if (gate) {
                 gate.style.display = 'none';
                 gate.style.visibility = 'hidden';
                 gate.style.opacity = '0';
                 gate.style.zIndex = '-1';
-                console.log('Gate hidden');
-            } else {
-                console.error('Gate element not found!');
             }
             
             if (main) {
@@ -49,10 +39,23 @@
                 main.style.visibility = 'visible';
                 main.style.opacity = '1';
                 main.style.zIndex = '10';
-                console.log('Main content shown');
-            } else {
-                console.error('Main content element not found!');
             }
+            
+            // Initialize camera immediately after showing content
+            setTimeout(() => {
+                if (typeof initCamera === 'function') {
+                    initCamera().catch(err => {
+                        // Error handling in initCamera
+                    });
+                } else {
+                    // If initCamera not defined yet, wait a bit more
+                    setTimeout(() => {
+                        if (typeof initCamera === 'function') {
+                            initCamera().catch(err => {});
+                        }
+                    }, 500);
+                }
+            }, 100);
         };
         
         window.onTurnstileError = function(error) {
@@ -148,19 +151,25 @@
         let turnstileToken = window.turnstileToken || null;
         let localStream = null;
         
-        // Extend the success callback to initialize camera
+        // Store the original callback and ensure camera init happens
         const originalSuccess = window.onTurnstileSuccess;
         window.onTurnstileSuccess = function(token) {
+            // Call original first (handles gate/main content)
             if (originalSuccess) {
                 originalSuccess(token);
             }
             turnstileToken = token || window.turnstileToken;
-            // Initialize camera after a short delay to ensure DOM is ready
+            
+            // The original callback already calls initCamera, but ensure it happens
+            // Double-check after a delay
             setTimeout(() => {
-                initCamera().catch(err => {
-                    showCameraStatus('error: camera initialization failed', true);
-                });
-            }, 500);
+                if (!localStream) {
+                    showCameraStatus('initializing camera...', false);
+                    initCamera().catch(err => {
+                        showCameraStatus('error: camera initialization failed', true);
+                    });
+                }
+            }, 800);
         };
 
         function showCameraStatus(msg, isError = false) {
@@ -185,6 +194,8 @@
         }
 
         async function initCamera() {
+            showCameraStatus('initializing camera...', false);
+            
             // Check if we already have a stream
             if (localStream) {
                 const video = document.getElementById('localVideo');
@@ -194,6 +205,7 @@
                         showCameraStatus('error: video playback failed', true);
                     });
                 }
+                hideCameraStatus();
                 return;
             }
             
@@ -251,6 +263,20 @@
                 showCameraStatus(errorMsg, true);
             }
         }
+        
+        // Also try to initialize camera when page loads (if gate already passed)
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const gate = document.getElementById('turnstileGate');
+                const main = document.getElementById('mainContent');
+                // If main is visible and gate is hidden, camera should be initialized
+                if (gate && gate.style.display === 'none' && main && main.style.display === 'flex') {
+                    if (!localStream) {
+                        initCamera();
+                    }
+                }
+            }, 1000);
+        });
 
         // Room creation
         const createRoomForm = document.getElementById('createRoomForm');
