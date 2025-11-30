@@ -126,32 +126,12 @@
             'well ur a weird fella',
             'knew this button will land',
             'classic move',
-            'bold choice',
-            'you do you',
-            'fair enough',
-            'understandable',
-            'have a nice day',
             'touch grass',
             'based',
             'absolute legend',
             'chaos achieved',
-            'mission accomplished',
-            'you win',
-            'gg',
-            'respect the chaos',
             'weird flex but ok',
-            'noted',
-            'cool story bro',
-            'sigma move',
-            'gigachad energy',
-            'no cap',
-            'fr fr',
-            'on god',
-            'deadass',
-            'bet',
-            'say less',
-            'facts',
-            'big mood'
+            'cool story bro'
         ];
         
         const memeLinks = [
@@ -159,22 +139,9 @@
             'https://youtu.be/dQw4w9WgXcQ',
             'https://youtu.be/j5a0jTc9S10',
             'https://youtu.be/9bZkp7q19f0',
-            'https://youtu.be/ZZ5LpwO-An4',
             'https://youtu.be/kJQP7kiw5Fk',
             'https://youtu.be/fJ9rUzIMcZQ',
-            'https://youtu.be/L_jWHffIx5E',
-            'https://youtu.be/6n3pFFPSlW4',
-            'https://youtu.be/9bZkp7q19f0',
-            'https://youtu.be/ZZ5LpwO-An4',
-            'https://youtu.be/kJQP7kiw5Fk',
-            'https://youtu.be/fJ9rUzIMcZQ',
-            'https://youtu.be/L_jWHffIx5E',
-            'https://youtu.be/6n3pFFPSlW4',
-            'https://youtu.be/dQw4w9WgXcQ',
-            'https://youtu.be/j5a0jTc9S10',
-            'https://youtu.be/9bZkp7q19f0',
-            'https://youtu.be/ZZ5LpwO-An4',
-            'https://youtu.be/kJQP7kiw5Fk'
+            'https://youtu.be/L_jWHffIx5E'
         ];
         
         chaosBtn.addEventListener('click', () => {
@@ -183,9 +150,24 @@
                 webrtc.disconnect();
             }
             
-            // Show random message
-            const message = chaosMessages[Math.floor(Math.random() * chaosMessages.length)];
-            updateStatus(message);
+            // Randomize: message only, link only, or both
+            const displayMode = Math.random();
+            const randomLink = memeLinks[Math.floor(Math.random() * memeLinks.length)];
+            
+            if (displayMode < 0.4) {
+                // 40% - message only
+                const message = chaosMessages[Math.floor(Math.random() * chaosMessages.length)];
+                updateStatus(message);
+            } else if (displayMode < 0.7) {
+                // 30% - link only (show shortened)
+                const shortLink = randomLink.replace('https://youtu.be/', '');
+                updateStatus('youtu.be/' + shortLink.split('?')[0]);
+            } else {
+                // 30% - both message and link
+                const message = chaosMessages[Math.floor(Math.random() * chaosMessages.length)];
+                const shortLink = randomLink.replace('https://youtu.be/', '').split('?')[0];
+                updateStatus(message + ' • youtu.be/' + shortLink);
+            }
             
             // Pick random meme link
             const randomLink = memeLinks[Math.floor(Math.random() * memeLinks.length)];
@@ -231,7 +213,7 @@
                 chaosBtn.style.filter = '';
             }, 1500);
             
-            // Open random meme link in new tab
+            // Open random meme link in new tab (always opens, regardless of display)
             setTimeout(() => {
                 window.open(randomLink, '_blank');
             }, 1500);
