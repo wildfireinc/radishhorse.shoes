@@ -10,6 +10,8 @@
         window.BACKEND_URL = 'https://api.radishhorse.shoes';
         window.API_BASE = 'https://api.radishhorse.shoes';
         window.SOCKET_URL = 'https://api.radishhorse.shoes';
+        // Turnstile site key (can be overridden via Vercel env var TURNSTILE_SITE_KEY)
+        window.TURNSTILE_SITE_KEY = '0x4AAAAAACD2gD3et3LnZ5PS';
     </script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -20,7 +22,7 @@
         <div class="gate-content">
             <h1 class="neon-logo">radishhorse.shoes</h1>
             <div class="turnstile-container">
-                <div class="cf-turnstile" data-sitekey="0x4AAAAAACD2gD3et3LnZ5PS" data-callback="onTurnstileSuccess"></div>
+                <div class="cf-turnstile" data-sitekey="" data-callback="onTurnstileSuccess" id="turnstileWidget"></div>
             </div>
         </div>
     </div>
@@ -57,6 +59,14 @@
 
     <script src="webrtc.js"></script>
     <script>
+        // Set Turnstile site key
+        document.addEventListener('DOMContentLoaded', function() {
+            const turnstileWidget = document.getElementById('turnstileWidget');
+            if (turnstileWidget) {
+                turnstileWidget.setAttribute('data-sitekey', window.TURNSTILE_SITE_KEY || '0x4AAAAAACD2gD3et3LnZ5PS');
+            }
+        });
+
         let turnstileToken = null;
         let localStream = null;
 
