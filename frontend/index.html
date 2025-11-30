@@ -94,7 +94,7 @@
 
         // Turnstile success callback
         window.onTurnstileSuccess = async function(token) {
-            console.log('Turnstile verified, token received');
+            console.log('Turnstile verified, token received:', token ? 'yes' : 'no');
             if (!token) {
                 console.error('Turnstile returned empty token');
                 if (window.turnstile) {
@@ -103,11 +103,25 @@
                 return;
             }
             turnstileToken = token;
+            
             // Hide gate, show main content
             const gate = document.getElementById('turnstileGate');
             const main = document.getElementById('mainContent');
-            if (gate) gate.style.display = 'none';
-            if (main) main.style.display = 'flex';
+            
+            console.log('Gate element:', gate);
+            console.log('Main element:', main);
+            
+            if (gate) {
+                gate.style.display = 'none';
+                console.log('Gate hidden');
+            }
+            if (main) {
+                main.style.display = 'flex';
+                console.log('Main content shown');
+            } else {
+                console.error('Main content element not found!');
+            }
+            
             // Initialize camera after gate passes
             await initCamera();
         };
