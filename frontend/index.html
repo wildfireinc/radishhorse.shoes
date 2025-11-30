@@ -110,12 +110,14 @@
             
             if (gate) {
                 gate.style.display = 'none';
+                gate.style.visibility = 'hidden';
+                gate.style.opacity = '0';
             }
             if (main) {
                 main.style.display = 'flex';
-                // Force visibility
                 main.style.visibility = 'visible';
                 main.style.opacity = '1';
+                main.style.zIndex = '1';
             }
             
             // Initialize camera after gate passes
