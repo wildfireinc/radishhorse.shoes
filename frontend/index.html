@@ -59,7 +59,7 @@
             <form id="createRoomForm">
                 <input type="text" id="roomPassword" placeholder="set password (optional)" class="neon-input">
                 <div id="createRoomStatus" class="status" style="display: none;"></div>
-                <button type="submit" class="neon-button">create room</button>
+                <button type="submit" id="createRoomBtn" class="neon-button">create room</button>
             </form>
             <div id="roomLinkSection" style="display: none; margin-top: 1rem;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 600px; width: 100%; margin: 0 auto;">
@@ -105,45 +105,72 @@
             }
         }
 
-        document.getElementById('createRoomForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!window.turnstileToken) {
-                showStatus('error: please complete verification first');
-                return;
-            }
-
-            const password = document.getElementById('roomPassword').value.trim();
-            const btn = document.getElementById('createRoomBtn');
-            btn.disabled = true;
-            btn.textContent = 'creating...';
-            showStatus('creating room...');
-
-            try {
-                const res = await fetch(`${window.API_BASE}/api/create-room`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password, turnstile_token: window.turnstileToken })
-                });
-                const data = await res.json();
-
-                if (res.ok && data.room_id) {
-                    showStatus('room created!');
-                    const link = window.location.origin + `/room/${data.room_id}`;
-                    document.getElementById('roomLink').value = link;
-                    document.getElementById('roomPasswordDisplay').value = password || '(no password)';
-                    document.getElementById('roomLinkSection').style.display = 'block';
-                    btn.textContent = 'room created';
-                } else {
-                    showStatus('error: ' + (data.error || 'failed to create room'));
-                    btn.disabled = false;
-                    btn.textContent = 'create room';
+        const createRoomForm = document.getElementById('createRoomForm');
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        
+        if (createRoomForm && createRoomBtn) {
+            createRoomForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (!window.turnstileToken) {
+                    showStatus('error: please complete verification first');
+                    return;
                 }
-            } catch (err) {
-                showStatus('error: ' + err.message);
-                btn.disabled = false;
-                btn.textContent = 'create room';
-            }
-        });
+
+                const password = document.getElementById('roomPassword')?.value.trim() || '';
+                createRoomBtn.disabled = true;
+                createRoomBtn.textContent = 'creating...';
+                showStatus('creating room...');
+
+                try {
+                    const res = await fetch(`${window.API_BASE}/api/create-room`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password, turnstile_token: window.turnstileToken })
+                    });
+                    
+                    let data;
+                    try {
+                        data = await res.json();
+                    } catch (parseErr) {
+                        showStatus('error: invalid server response');
+                        createRoomBtn.disabled = false;
+                        createRoomBtn.textContent = 'create room';
+                        return;
+                    }
+
+                    if (res.ok && data.room_id) {
+                        showStatus('room created!');
+                        const link = window.location.origin + `/room/${data.room_id}`;
+                        const roomLinkInput = document.getElementById('roomLink');
+                        const roomPasswordDisplay = document.getElementById('roomPasswordDisplay');
+                        const roomLinkSection = document.getElementById('roomLinkSection');
+                        
+                        if (roomLinkInput) roomLinkInput.value = link;
+                        if (roomPasswordDisplay) roomPasswordDisplay.value = password || '(no password)';
+                        if (roomLinkSection) roomLinkSection.style.display = 'block';
+                        
+                        createRoomBtn.textContent = 'room created';
+                    } else {
+                        showStatus('error: ' + (data.error || data.message || 'failed to create room'));
+                        createRoomBtn.disabled = false;
+                        createRoomBtn.textContent = 'create room';
+                    }
+                } catch (err) {
+                    showStatus('error: ' + (err.message || 'network error'));
+                    createRoomBtn.disabled = false;
+                    createRoomBtn.textContent = 'create room';
+                }
+            });
+            
+            // Also handle button click directly
+            createRoomBtn.addEventListener('click', (e) => {
+                if (e.target.type !== 'submit') {
+                    createRoomForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        }
 
         document.getElementById('copyLinkBtn')?.addEventListener('click', () => {
             const input = document.getElementById('roomLink');
