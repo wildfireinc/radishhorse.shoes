@@ -80,11 +80,17 @@
         <div class="room-creation">
             <form id="createRoomForm">
                 <div class="form-group">
-                    <input type="text" id="roomPassword" placeholder="optional password" class="neon-input">
+                    <input type="text" id="roomPassword" placeholder="set password (optional)" class="neon-input">
                 </div>
                 <div id="createRoomStatus" class="status" style="display: none; margin-bottom: 1rem;"></div>
                 <button type="submit" class="neon-button" id="createRoomBtn">create room</button>
             </form>
+            <div id="roomLinkSection" style="display: none; margin-top: 1rem;">
+                <div class="room-url" style="justify-content: center;">
+                    <input type="text" id="roomLink" readonly class="neon-input" style="max-width: 300px;">
+                    <button id="copyLinkBtn" class="neon-button small">copy link</button>
+                </div>
+            </div>
         </div>
 
         <div class="creator-credit">
@@ -205,10 +211,20 @@
                     }
 
                     if (response.ok && data.room_id) {
-                        showStatus('success! redirecting...');
-                        setTimeout(() => {
-                            window.location.href = `/room/${data.room_id}`;
-                        }, 500);
+                        showStatus('room created!');
+                        // Show room link instead of redirecting
+                        const roomLink = window.location.origin + `/room/${data.room_id}`;
+                        const roomLinkInput = document.getElementById('roomLink');
+                        const roomLinkSection = document.getElementById('roomLinkSection');
+                        if (roomLinkInput && roomLinkSection) {
+                            roomLinkInput.value = roomLink;
+                            roomLinkSection.style.display = 'block';
+                        }
+                        if (createRoomBtn) {
+                            createRoomBtn.disabled = false;
+                            createRoomBtn.textContent = 'room created';
+                        }
+                        // Don't redirect - stay on page
                     } else {
                         const errorMsg = data.error || data.message || `HTTP ${response.status}`;
                         showStatus('error: ' + errorMsg);
@@ -241,10 +257,27 @@
         }
 
 
+        // Copy link button
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', () => {
+                const roomLinkInput = document.getElementById('roomLink');
+                if (roomLinkInput) {
+                    roomLinkInput.select();
+                    document.execCommand('copy');
+                    copyLinkBtn.textContent = 'copied!';
+                    setTimeout(() => {
+                        copyLinkBtn.textContent = 'copy link';
+                    }, 2000);
+                }
+            });
+        }
+
         // Roulette button
         document.getElementById('rouletteBtn').addEventListener('click', async () => {
             if (!turnstileToken) {
-                alert('Please complete verification first');
+                showStatus('error: please complete verification first');
+                setTimeout(hideStatus, 3000);
                 return;
             }
             try {
@@ -253,10 +286,13 @@
                 if (response.ok) {
                     window.location.href = `/room/${data.room_id}`;
                 } else {
-                    alert('No active rooms available. Create one first!');
+                    showStatus('no active rooms available');
+                    setTimeout(hideStatus, 3000);
                 }
             } catch (err) {
                 console.error('Error finding room:', err);
+                showStatus('error finding room');
+                setTimeout(hideStatus, 3000);
             }
         });
 

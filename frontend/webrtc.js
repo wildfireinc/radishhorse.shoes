@@ -55,8 +55,9 @@ class WebRTCManager {
                 audio: true
             });
             
+            // Only set local video on index page, not room page
             const localVideo = document.getElementById('localVideo');
-            if (localVideo) {
+            if (localVideo && window.location.pathname === '/') {
                 localVideo.srcObject = this.localStream;
             }
         } catch (err) {
@@ -187,15 +188,41 @@ class WebRTCManager {
             this.peerConnection.ontrack = (event) => {
                 console.log('Received remote stream', event);
                 this.remoteStream = event.streams[0];
-                const remoteVideo = document.getElementById('remoteVideo');
-                if (remoteVideo) {
-                    remoteVideo.srcObject = this.remoteStream;
-                    remoteVideo.play().catch(err => {
+                
+                // Create video element dynamically
+                const videoGrid = document.getElementById('videoGrid');
+                if (videoGrid) {
+                    // Remove existing remote videos
+                    const existingRemote = videoGrid.querySelector('.remote-video-wrapper');
+                    if (existingRemote) {
+                        existingRemote.remove();
+                    }
+                    
+                    // Create new video wrapper
+                    const videoWrapper = document.createElement('div');
+                    videoWrapper.className = 'video-wrapper remote-video-wrapper';
+                    
+                    const video = document.createElement('video');
+                    video.id = 'remoteVideo';
+                    video.autoplay = true;
+                    video.playsInline = true;
+                    video.muted = false;
+                    video.srcObject = this.remoteStream;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'video-label';
+                    label.textContent = 'them';
+                    
+                    videoWrapper.appendChild(video);
+                    videoWrapper.appendChild(label);
+                    videoGrid.appendChild(videoWrapper);
+                    
+                    video.play().catch(err => {
                         console.error('Error playing remote video:', err);
                     });
                     console.log('Remote video stream set');
                 } else {
-                    console.error('Remote video element not found');
+                    console.error('Video grid element not found');
                 }
                 this.updateStatus('connected');
             };

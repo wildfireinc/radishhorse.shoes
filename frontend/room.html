@@ -35,15 +35,8 @@
             <h1 class="neon-logo small">radishhorse.shoes</h1>
         </div>
 
-        <div class="video-grid">
-            <div class="video-wrapper">
-                <video id="localVideo" autoplay muted playsinline></video>
-                <div class="video-label">you</div>
-            </div>
-            <div class="video-wrapper">
-                <video id="remoteVideo" autoplay playsinline muted></video>
-                <div class="video-label">them</div>
-            </div>
+        <div class="video-grid" id="videoGrid">
+            <!-- Remote videos will be added here dynamically when peers connect -->
         </div>
 
         <div class="room-info">
@@ -57,10 +50,6 @@
         <div class="password-section" id="passwordSection" style="display: none;">
             <input type="password" id="passwordInput" placeholder="enter password" class="neon-input">
             <button id="joinBtn" class="neon-button small">join</button>
-        </div>
-
-        <div class="room-creation" style="margin-top: 1rem;">
-            <input type="text" id="roomPasswordInput" placeholder="set password (optional)" class="neon-input" style="max-width: 300px;">
         </div>
 
         <div class="controls">
@@ -114,31 +103,6 @@
             await webrtc.joinRoom(password);
         });
 
-        // Set password input (auto-updates on change)
-        const roomPasswordInput = document.getElementById('roomPasswordInput');
-        if (roomPasswordInput) {
-            let passwordTimeout;
-            roomPasswordInput.addEventListener('input', async () => {
-                clearTimeout(passwordTimeout);
-                const password = roomPasswordInput.value.trim();
-                
-                passwordTimeout = setTimeout(async () => {
-                    try {
-                        const response = await fetch(`${window.API_BASE || ''}/api/room/${roomId}/password`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                action: 'set',
-                                password: password
-                            })
-                        });
-                        // Silent update - no alert
-                    } catch (err) {
-                        console.error('Error setting password:', err);
-                    }
-                }, 1000); // Wait 1 second after typing stops
-            });
-        }
 
         // Roulette button
         document.getElementById('rouletteBtn').addEventListener('click', async () => {

@@ -119,11 +119,15 @@ body::before {
 
 .video-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1rem;
     width: 100%;
-    max-width: 800px;
+    max-width: 1200px;
     margin-bottom: 2rem;
+}
+
+.video-grid:has(.remote-video-wrapper) {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .video-wrapper {
