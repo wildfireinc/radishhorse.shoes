@@ -108,18 +108,14 @@
             const gate = document.getElementById('turnstileGate');
             const main = document.getElementById('mainContent');
             
-            console.log('Gate element:', gate);
-            console.log('Main element:', main);
-            
             if (gate) {
                 gate.style.display = 'none';
-                console.log('Gate hidden');
             }
             if (main) {
                 main.style.display = 'flex';
-                console.log('Main content shown');
-            } else {
-                console.error('Main content element not found!');
+                // Force visibility
+                main.style.visibility = 'visible';
+                main.style.opacity = '1';
             }
             
             // Initialize camera after gate passes
