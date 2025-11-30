@@ -1,6 +1,7 @@
 class WebRTCManager {
-    constructor(roomId) {
+    constructor(roomId, chatOnly = false) {
         this.roomId = roomId;
+        this.chatOnly = chatOnly;
         this.socket = null;
         this.localStream = null;
         this.peerConnection = null;
@@ -33,6 +34,7 @@ class WebRTCManager {
     }
 
     async initLocalStream() {
+        if (this.chatOnly) return; // Skip camera for chat-only mode
         if (this.localStream) return;
         try {
             this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });

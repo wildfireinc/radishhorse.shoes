@@ -103,7 +103,15 @@
         }
 
         function joinRoom(password = '') {
-            webrtc = new WebRTCManager(roomId);
+            const mode = sessionStorage.getItem(`mode_${roomId}`) || 'camera';
+            const chatOnly = mode === 'chat';
+            
+            // Hide video grid if chat only
+            if (chatOnly) {
+                document.getElementById('videoGrid').style.display = 'none';
+            }
+            
+            webrtc = new WebRTCManager(roomId, chatOnly);
             webrtc.onStatusChange = updateStatus;
             webrtc.joinRoom(password).then(() => {
                 showRoomContent();

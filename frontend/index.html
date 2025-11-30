@@ -51,13 +51,25 @@
         </div>
 
         <div class="controls">
-            <button id="rouletteBtn" class="neon-button">meet a stranger</button>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <button id="rouletteBtn" class="neon-button">meet a stranger</button>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="rouletteModeToggle" style="width: 20px; height: 20px; cursor: pointer;">
+                    <span style="color: #00ffff; text-shadow: 0 0 5px #00ffff;">chat only</span>
+                </label>
+            </div>
             <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
         </div>
 
         <div class="room-creation">
             <form id="createRoomForm">
                 <input type="text" id="roomPassword" placeholder="set password (optional)" class="neon-input">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; justify-content: center;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="createRoomModeToggle" style="width: 20px; height: 20px; cursor: pointer;">
+                        <span style="color: #00ffff; text-shadow: 0 0 5px #00ffff;">chat only</span>
+                    </label>
+                </div>
                 <div id="createRoomStatus" class="status" style="display: none;"></div>
                 <button type="submit" id="createRoomBtn" class="neon-button">create room</button>
             </form>
@@ -82,7 +94,20 @@
         let turnstileToken = null;
         let localStream = null;
 
+        let chatOnlyMode = false;
+
+        function updateCameraVisibility() {
+            const videoContainer = document.querySelector('.video-preview-container');
+            if (videoContainer) {
+                videoContainer.style.display = chatOnlyMode ? 'none' : 'block';
+            }
+        }
+
         async function initCamera() {
+            if (chatOnlyMode) {
+                updateCameraVisibility();
+                return;
+            }
             if (localStream) return;
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -95,6 +120,17 @@
                 showStatus('camera error: ' + err.message);
             }
         }
+
+        // Toggle handlers
+        document.getElementById('rouletteModeToggle').addEventListener('change', (e) => {
+            chatOnlyMode = e.target.checked;
+            updateCameraVisibility();
+        });
+
+        document.getElementById('createRoomModeToggle').addEventListener('change', (e) => {
+            chatOnlyMode = e.target.checked;
+            updateCameraVisibility();
+        });
 
         function showStatus(msg) {
             const el = document.getElementById('createRoomStatus');
@@ -119,6 +155,7 @@
                 }
 
                 const password = document.getElementById('roomPassword')?.value.trim() || '';
+                const chatOnly = document.getElementById('createRoomModeToggle').checked;
                 createRoomBtn.disabled = true;
                 createRoomBtn.textContent = 'creating...';
                 showStatus('creating room...');
@@ -127,7 +164,7 @@
                     const res = await fetch(`${window.API_BASE}/api/create-room`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ password, turnstile_token: window.turnstileToken })
+                        body: JSON.stringify({ password, turnstile_token: window.turnstileToken, chat_only: chatOnly })
                     });
                     
                     let data;
@@ -141,9 +178,10 @@
                     }
 
                     if (res.ok && data.room_id) {
-                        // Store creator token in sessionStorage
+                        // Store creator token and mode in sessionStorage
                         const creatorToken = data.creator_token || Date.now().toString();
                         sessionStorage.setItem(`creator_${data.room_id}`, creatorToken);
+                        sessionStorage.setItem(`mode_${data.room_id}`, chatOnly ? 'chat' : 'camera');
                         
                         showStatus('room created! redirecting...');
                         setTimeout(() => {
@@ -186,6 +224,7 @@
             }
 
             const btn = document.getElementById('rouletteBtn');
+            const chatOnly = document.getElementById('rouletteModeToggle').checked;
             btn.disabled = true;
             let seconds = 0;
             btn.textContent = 'wait... 0s';
@@ -196,11 +235,12 @@
             }, 1000);
 
             try {
-                const res = await fetch(`${window.API_BASE}/api/roulette`);
+                const res = await fetch(`${window.API_BASE}/api/roulette?chat_only=${chatOnly}`);
                 const data = await res.json();
                 clearInterval(rouletteTimer);
                 
                 if (res.ok && data.room_id) {
+                    sessionStorage.setItem(`mode_${data.room_id}`, chatOnly ? 'chat' : 'camera');
                     btn.textContent = 'found!';
                     setTimeout(() => window.location.href = `/${data.room_id}`, 500);
                 } else {
