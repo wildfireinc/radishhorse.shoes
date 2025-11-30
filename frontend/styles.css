@@ -336,25 +336,19 @@ body::before {
     bottom: 1rem;
     right: 1rem;
     font-size: 0.7rem;
-    color: rgba(0, 255, 255, 0.5);
-    text-shadow: 0 0 3px rgba(0, 255, 255, 0.5);
+    color: #00ffff;
+    text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
     font-family: 'Rajdhani', sans-serif;
     text-transform: lowercase;
     z-index: 10;
     text-decoration: none;
     cursor: pointer;
-    padding: 0.5rem 1rem;
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    background: rgba(0, 0, 0, 0.5);
     transition: all 0.3s ease;
 }
 
 .creator-credit:hover {
-    color: #00ffff;
-    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-    border-color: #00ffff;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-    transform: translateY(-2px);
+    color: #ff00ff;
+    text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
 }
 
 .glitch-overlay {
