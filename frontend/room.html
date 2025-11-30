@@ -107,11 +107,18 @@
                 document.getElementById('videoGrid').style.display = 'none';
             }
             
+            updateStatus('initializing...');
             webrtc = new WebRTCManager(roomId, chatOnly);
             webrtc.onStatusChange = updateStatus;
-            webrtc.joinRoom(password).then(() => {
-                showRoomContent();
-            });
+            
+            // Wait for socket to connect before joining
+            setTimeout(() => {
+                webrtc.joinRoom(password).then(() => {
+                    showRoomContent();
+                }).catch(() => {
+                    updateStatus('error joining room');
+                });
+            }, 500);
         }
 
         document.getElementById('joinBtn').addEventListener('click', () => {

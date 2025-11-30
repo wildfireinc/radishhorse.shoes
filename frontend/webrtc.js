@@ -52,7 +52,9 @@ class WebRTCManager {
         const socketUrl = window.SOCKET_URL || window.API_BASE || '';
         this.socket = socketUrl ? io(socketUrl) : io();
 
-        this.socket.on('connect', () => {});
+        this.socket.on('connect', () => {
+            this.updateStatus('connected');
+        });
         this.socket.on('joined', () => {
             this.updateStatus('waiting for peer...');
             this.waitForPeer();
@@ -114,9 +116,24 @@ class WebRTCManager {
     }
 
     async joinRoom(password = '') {
-        if (!this.socket?.connected) {
-            this.updateStatus('connecting...');
-            return Promise.resolve();
+        if (!this.socket) {
+            this.updateStatus('error: socket not initialized');
+            return Promise.reject('Socket not initialized');
+        }
+        
+        if (!this.socket.connected) {
+            this.updateStatus('waiting for connection...');
+            return new Promise((resolve, reject) => {
+                this.socket.once('connect', () => {
+                    this.joinRoom(password).then(resolve).catch(reject);
+                });
+                setTimeout(() => {
+                    if (!this.socket.connected) {
+                        this.updateStatus('error: connection timeout');
+                        reject('Connection timeout');
+                    }
+                }, 5000);
+            });
         }
 
         if (password) {
