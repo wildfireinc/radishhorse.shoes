@@ -344,9 +344,17 @@ class WebRTCManager {
             this.peerConnection = null;
         }
         
-        const remoteVideo = document.getElementById('remoteVideo');
-        if (remoteVideo) {
-            remoteVideo.srcObject = null;
+        // Remove remote video wrapper
+        const videoGrid = document.getElementById('videoGrid');
+        if (videoGrid) {
+            const remoteWrapper = videoGrid.querySelector('.remote-video-wrapper');
+            if (remoteWrapper) {
+                const video = remoteWrapper.querySelector('video');
+                if (video && video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                }
+                remoteWrapper.remove();
+            }
         }
         
         this.remoteStream = null;
