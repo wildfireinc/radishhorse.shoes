@@ -14,6 +14,11 @@ class WebRTCManager {
         this.initSocket();
         await this.getTurnConfig();
         await this.initLocalStream();
+        
+        // Wait for socket to be ready
+        if (!this.socket) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
     }
 
     async getTurnConfig() {

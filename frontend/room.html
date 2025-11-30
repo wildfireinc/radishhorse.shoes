@@ -106,8 +106,14 @@
             webrtc = new WebRTCManager(roomId, chatOnly);
             webrtc.onStatusChange = updateStatus;
             
-            // Wait a bit for socket to initialize
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // Wait for WebRTCManager to finish initialization
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Check if socket exists
+            if (!webrtc.socket) {
+                updateStatus('error: socket not ready');
+                return;
+            }
             
             webrtc.joinRoom(password).then(() => {
                 showRoomContent();
