@@ -12,6 +12,14 @@
         window.SOCKET_URL = 'https://api.radishhorse.shoes';
         window.TURNSTILE_SITE_KEY = '0x4AAAAAACD2gD3et3LnZ5PS';
         
+        // Set Turnstile site key immediately so widget can render
+        window.addEventListener('DOMContentLoaded', function() {
+            const turnstileWidget = document.getElementById('turnstileWidget');
+            if (turnstileWidget && !turnstileWidget.getAttribute('data-sitekey')) {
+                turnstileWidget.setAttribute('data-sitekey', window.TURNSTILE_SITE_KEY);
+            }
+        });
+        
         // Fetch backend configuration
         (async function() {
             try {
@@ -21,7 +29,18 @@
                     if (config.apiUrl) window.API_BASE = config.apiUrl;
                     if (config.socketUrl) window.SOCKET_URL = config.socketUrl;
                     if (config.backendUrl) window.BACKEND_URL = config.backendUrl;
-                    if (config.turnstileSiteKey) window.TURNSTILE_SITE_KEY = config.turnstileSiteKey;
+                    if (config.turnstileSiteKey) {
+                        window.TURNSTILE_SITE_KEY = config.turnstileSiteKey;
+                        // Update widget if it exists
+                        const turnstileWidget = document.getElementById('turnstileWidget');
+                        if (turnstileWidget) {
+                            turnstileWidget.setAttribute('data-sitekey', config.turnstileSiteKey);
+                            // Reset widget to apply new key
+                            if (window.turnstile) {
+                                window.turnstile.reset();
+                            }
+                        }
+                    }
                     console.log('Backend config loaded:', config);
                 }
             } catch (err) {
@@ -38,7 +57,7 @@
         <div class="gate-content">
             <h1 class="neon-logo">radishhorse.shoes</h1>
             <div class="turnstile-container">
-                <div class="cf-turnstile" data-sitekey="" data-callback="onTurnstileSuccess" data-error-callback="onTurnstileError" id="turnstileWidget"></div>
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAACD2gD3et3LnZ5PS" data-callback="onTurnstileSuccess" data-error-callback="onTurnstileError" id="turnstileWidget"></div>
             </div>
         </div>
     </div>
@@ -76,16 +95,6 @@
 
     <script src="webrtc.js"></script>
     <script>
-        // Set Turnstile site key (wait for config to load)
-        document.addEventListener('DOMContentLoaded', function() {
-            // Wait a bit for config to load, then set Turnstile
-            setTimeout(() => {
-                const turnstileWidget = document.getElementById('turnstileWidget');
-                if (turnstileWidget) {
-                    turnstileWidget.setAttribute('data-sitekey', window.TURNSTILE_SITE_KEY || '0x4AAAAAACD2gD3et3LnZ5PS');
-                }
-            }, 100);
-        });
 
         let turnstileToken = null;
         let localStream = null;
