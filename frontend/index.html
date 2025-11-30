@@ -147,14 +147,15 @@
         let turnstileToken = window.turnstileToken || null;
         let localStream = null;
         
-        // Override the callback to also initialize camera
-        const originalCallback = window.onTurnstileSuccess;
+        // Extend the success callback to initialize camera
+        const originalSuccess = window.onTurnstileSuccess;
         window.onTurnstileSuccess = function(token) {
-            originalCallback(token);
-            turnstileToken = token;
+            if (originalSuccess) originalSuccess(token);
+            turnstileToken = token || window.turnstileToken;
+            // Initialize camera after a short delay
             setTimeout(() => {
-                initCamera();
-            }, 100);
+                initCamera().catch(err => console.error('Camera init error:', err));
+            }, 200);
         };
 
         async function initCamera() {
