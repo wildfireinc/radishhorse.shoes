@@ -143,7 +143,7 @@
                     if (res.ok && data.room_id) {
                         showStatus('room created! redirecting...');
                         setTimeout(() => {
-                            window.location.href = `/room/${data.room_id}`;
+                            window.location.href = `/${data.room_id}`;
                         }, 500);
                     } else {
                         showStatus('error: ' + (data.error || data.message || 'failed to create room'));
@@ -198,7 +198,7 @@
                 
                 if (res.ok && data.room_id) {
                     btn.textContent = 'found!';
-                    setTimeout(() => window.location.href = `/room/${data.room_id}`, 500);
+                    setTimeout(() => window.location.href = `/${data.room_id}`, 500);
                 } else {
                     btn.disabled = false;
                     btn.textContent = 'meet a stranger';

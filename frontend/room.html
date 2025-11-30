@@ -59,7 +59,13 @@
 
     <script src="/webrtc.js"></script>
     <script>
-        const roomId = window.location.pathname.split('/').pop();
+        // Get room ID from pathname (e.g., /abc123 -> abc123)
+        const roomId = window.location.pathname.split('/').filter(p => p && p !== 'room.html').pop();
+        
+        if (!roomId) {
+            // No room ID in path, redirect to home
+            window.location.href = '/';
+        }
         let webrtc = null;
 
         document.getElementById('roomUrl').value = window.location.href;
@@ -103,7 +109,7 @@
                 const res = await fetch(`${window.API_BASE}/api/roulette`);
                 const data = await res.json();
                 if (res.ok && data.room_id !== roomId) {
-                    window.location.href = `/room/${data.room_id}`;
+                    window.location.href = `/${data.room_id}`;
                 } else {
                     updateStatus('no other active rooms available');
                 }
