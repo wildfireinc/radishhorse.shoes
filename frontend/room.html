@@ -53,7 +53,7 @@
         </div>
 
         <div class="controls">
-            <button id="rouletteBtn" class="neon-button">see what happens</button>
+            <button id="rouletteBtn" class="neon-button">meet a stranger</button>
             <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
         </div>
 
@@ -119,18 +119,48 @@
             }
         });
 
-        // Chaos button
-        document.getElementById('chaosBtn').addEventListener('click', () => {
-            // Disconnect and redirect
+        // Chaos button (go fuck yourself)
+        const chaosBtn = document.getElementById('chaosBtn');
+        const chaosMessages = [
+            'respect',
+            'well ur a weird fella',
+            'knew this button will land',
+            'classic move',
+            'bold choice',
+            'you do you',
+            'fair enough',
+            'understandable',
+            'have a nice day',
+            'touch grass',
+            'based',
+            'absolute legend',
+            'chaos achieved',
+            'mission accomplished',
+            'you win',
+            'gg',
+            'respect the chaos',
+            'weird flex but ok',
+            'noted',
+            'cool story bro'
+        ];
+        
+        chaosBtn.addEventListener('click', () => {
+            // Disconnect if in room
             if (webrtc) {
                 webrtc.disconnect();
             }
+            
+            // Show random message
+            const message = chaosMessages[Math.floor(Math.random() * chaosMessages.length)];
+            updateStatus(message);
+            
+            // Random chaotic effects
             const effects = [
                 () => {
                     document.body.style.filter = 'hue-rotate(180deg) brightness(2)';
                     setTimeout(() => {
                         document.body.style.filter = '';
-                        window.location.href = '/';
+                        window.location.href = 'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du';
                     }, 1000);
                 },
                 () => {
@@ -139,17 +169,25 @@
                     document.body.appendChild(glitch);
                     setTimeout(() => {
                         glitch.remove();
-                        window.location.href = '/';
+                        window.location.href = 'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du';
                     }, 800);
                 },
                 () => {
                     document.body.style.animation = 'shake 0.5s';
                     setTimeout(() => {
                         document.body.style.animation = '';
-                        window.location.href = '/';
+                        window.location.href = 'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du';
                     }, 500);
+                },
+                () => {
+                    document.body.style.filter = 'brightness(2) saturate(2)';
+                    setTimeout(() => {
+                        document.body.style.filter = '';
+                        window.location.href = 'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du';
+                    }, 800);
                 }
             ];
+            
             const randomEffect = effects[Math.floor(Math.random() * effects.length)];
             randomEffect();
         });

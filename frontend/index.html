@@ -73,7 +73,7 @@
         </div>
 
         <div class="controls">
-            <button id="rouletteBtn" class="neon-button">see what happens</button>
+            <button id="rouletteBtn" class="neon-button">meet a stranger</button>
             <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
         </div>
 
@@ -301,31 +301,92 @@
             });
         }
 
-        // Roulette button
-        document.getElementById('rouletteBtn').addEventListener('click', async () => {
+        // Meet a stranger button (roulette)
+        const rouletteBtn = document.getElementById('rouletteBtn');
+        let rouletteTimer = null;
+        let rouletteSeconds = 0;
+        
+        rouletteBtn.addEventListener('click', async () => {
             if (!turnstileToken) {
                 showStatus('error: please complete verification first');
                 setTimeout(hideStatus, 3000);
                 return;
             }
+            
+            // Start timer and update button
+            rouletteBtn.disabled = true;
+            rouletteSeconds = 0;
+            rouletteBtn.textContent = 'wait... 0s';
+            
+            rouletteTimer = setInterval(() => {
+                rouletteSeconds++;
+                rouletteBtn.textContent = `wait... ${rouletteSeconds}s`;
+            }, 1000);
+            
             try {
                 const response = await fetch(`${window.API_BASE || ''}/api/roulette`);
                 const data = await response.json();
+                
+                if (rouletteTimer) {
+                    clearInterval(rouletteTimer);
+                    rouletteTimer = null;
+                }
+                
                 if (response.ok) {
-                    window.location.href = `/room/${data.room_id}`;
+                    rouletteBtn.textContent = 'found!';
+                    setTimeout(() => {
+                        window.location.href = `/room/${data.room_id}`;
+                    }, 500);
                 } else {
+                    rouletteBtn.disabled = false;
+                    rouletteBtn.textContent = 'meet a stranger';
                     showStatus('no active rooms available');
                     setTimeout(hideStatus, 3000);
                 }
             } catch (err) {
                 console.error('Error finding room:', err);
+                if (rouletteTimer) {
+                    clearInterval(rouletteTimer);
+                    rouletteTimer = null;
+                }
+                rouletteBtn.disabled = false;
+                rouletteBtn.textContent = 'meet a stranger';
                 showStatus('error finding room');
                 setTimeout(hideStatus, 3000);
             }
         });
 
-        // Chaos button
-        document.getElementById('chaosBtn').addEventListener('click', () => {
+        // Chaos button (go fuck yourself)
+        const chaosBtn = document.getElementById('chaosBtn');
+        const chaosMessages = [
+            'respect',
+            'well ur a weird fella',
+            'knew this button will land',
+            'classic move',
+            'bold choice',
+            'you do you',
+            'fair enough',
+            'understandable',
+            'have a nice day',
+            'touch grass',
+            'based',
+            'absolute legend',
+            'chaos achieved',
+            'mission accomplished',
+            'you win',
+            'gg',
+            'respect the chaos',
+            'weird flex but ok',
+            'noted',
+            'cool story bro'
+        ];
+        
+        chaosBtn.addEventListener('click', () => {
+            // Show random message
+            const message = chaosMessages[Math.floor(Math.random() * chaosMessages.length)];
+            showStatus(message);
+            setTimeout(hideStatus, 2000);
+            
             // Random chaotic effects
             const effects = [
                 () => {
@@ -337,17 +398,28 @@
                     setTimeout(() => document.body.style.transform = '', 500);
                 },
                 () => {
-                    window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank');
-                },
-                () => {
                     const glitch = document.createElement('div');
                     glitch.className = 'glitch-overlay';
                     document.body.appendChild(glitch);
                     setTimeout(() => glitch.remove(), 500);
+                },
+                () => {
+                    document.body.style.animation = 'shake 0.5s';
+                    setTimeout(() => document.body.style.animation = '', 500);
+                },
+                () => {
+                    document.body.style.filter = 'brightness(2) saturate(2)';
+                    setTimeout(() => document.body.style.filter = '', 800);
                 }
             ];
+            
             const randomEffect = effects[Math.floor(Math.random() * effects.length)];
             randomEffect();
+            
+            // Redirect to YouTube link after animation
+            setTimeout(() => {
+                window.location.href = 'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du';
+            }, 1500);
         });
     </script>
 </body>
