@@ -137,8 +137,14 @@
                     if (response.ok) {
                         window.location.href = `/room/${data.room_id}`;
                     } else {
-                        alert('Failed to create room: ' + (data.error || 'Unknown error'));
-                        console.error('Create room failed:', data);
+                        const errorMsg = data.error || data.message || `HTTP ${response.status}: ${response.statusText}`;
+                        alert('Failed to create room: ' + errorMsg);
+                        console.error('Create room failed:', {
+                            status: response.status,
+                            statusText: response.statusText,
+                            data: data,
+                            url: apiUrl
+                        });
                         // Reset Turnstile
                         if (window.turnstile) {
                             window.turnstile.reset();
