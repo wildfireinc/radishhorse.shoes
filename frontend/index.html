@@ -40,9 +40,6 @@
                 main.style.opacity = '1';
                 main.style.zIndex = '10';
             }
-            
-            // Signal that Turnstile passed - camera will be initialized by the override callback
-            window.turnstilePassed = true;
         };
         
         window.onTurnstileError = function(error) {
@@ -98,8 +95,6 @@
 
         <div class="video-preview-container">
             <video id="localVideo" autoplay muted playsinline></video>
-            <div id="cameraStatus" class="status" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 0.5rem 1rem; border-radius: 4px; display: none;"></div>
-            <button id="startCameraBtn" class="neon-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">start camera</button>
         </div>
 
         <div class="controls">
