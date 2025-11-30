@@ -64,7 +64,8 @@
                 <div class="form-group">
                     <input type="text" id="roomPassword" placeholder="optional password" class="neon-input">
                 </div>
-                <button type="submit" class="neon-button">create room</button>
+                <div id="createRoomStatus" class="status" style="display: none; margin-bottom: 1rem;"></div>
+                <button type="submit" class="neon-button" id="createRoomBtn">create room</button>
             </form>
         </div>
 
@@ -121,24 +122,39 @@
 
         // Room creation
         const createRoomForm = document.getElementById('createRoomForm');
+        const createRoomStatus = document.getElementById('createRoomStatus');
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        
+        function showStatus(msg) {
+            if (createRoomStatus) {
+                createRoomStatus.textContent = msg;
+                createRoomStatus.style.display = 'block';
+            }
+        }
+        
+        function hideStatus() {
+            if (createRoomStatus) {
+                createRoomStatus.style.display = 'none';
+            }
+        }
+        
         if (createRoomForm) {
             createRoomForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                console.log('Create room form submitted');
                 
                 const password = document.getElementById('roomPassword').value.trim();
                 
                 if (!turnstileToken) {
-                    alert('Please complete verification first');
-                    console.error('No Turnstile token available');
+                    showStatus('error: please complete verification first');
+                    setTimeout(hideStatus, 3000);
                     return;
                 }
 
-                console.log('Sending create room request with token:', turnstileToken.substring(0, 20) + '...');
+                showStatus('creating room...');
+                if (createRoomBtn) createRoomBtn.disabled = true;
 
                 try {
-                    const apiUrl = `${window.API_BASE || ''}/api/create-room`;
-                    console.log('API URL:', apiUrl);
+                    const apiUrl = `${window.API_BASE || 'https://api.radishhorse.shoes'}/api/create-room`;
                     
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -149,33 +165,25 @@
                         })
                     });
 
-                    console.log('Response status:', response.status);
-                    
                     let data;
                     try {
                         const text = await response.text();
-                        console.log('Response text:', text);
                         data = text ? JSON.parse(text) : {};
                     } catch (parseErr) {
-                        console.error('Failed to parse response:', parseErr);
-                        alert('Failed to parse server response');
+                        showStatus('error: invalid server response');
+                        if (createRoomBtn) createRoomBtn.disabled = false;
+                        setTimeout(hideStatus, 3000);
                         return;
                     }
-                    
-                    console.log('Response data:', data);
 
                     if (response.ok && data.room_id) {
-                        console.log('Redirecting to room:', data.room_id);
+                        showStatus('redirecting...');
                         window.location.href = `/room/${data.room_id}`;
                     } else {
-                        const errorMsg = data.error || data.message || `HTTP ${response.status}: ${response.statusText}`;
-                        alert('Failed to create room: ' + errorMsg);
-                        console.error('Create room failed:', {
-                            status: response.status,
-                            statusText: response.statusText,
-                            data: data,
-                            url: apiUrl
-                        });
+                        const errorMsg = data.error || data.message || `HTTP ${response.status}`;
+                        showStatus('error: ' + errorMsg);
+                        if (createRoomBtn) createRoomBtn.disabled = false;
+                        setTimeout(hideStatus, 5000);
                         // Reset Turnstile
                         if (window.turnstile) {
                             window.turnstile.reset();
@@ -183,12 +191,11 @@
                         }
                     }
                 } catch (err) {
-                    console.error('Error creating room:', err);
-                    alert('Failed to create room: ' + err.message);
+                    showStatus('error: ' + err.message);
+                    if (createRoomBtn) createRoomBtn.disabled = false;
+                    setTimeout(hideStatus, 5000);
                 }
             });
-        } else {
-            console.error('Create room form not found!');
         }
 
         // Set password button (on landing page - does nothing, pure chaos)
