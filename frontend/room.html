@@ -27,13 +27,11 @@
 
         <div class="video-grid" id="videoGrid"></div>
 
-        <!-- Password field (shown only for guests if password protected) -->
         <div class="password-section" id="passwordSection" style="display: none;">
             <input type="password" id="passwordInput" placeholder="enter password" class="neon-input">
             <button id="joinBtn" class="neon-button small">join</button>
         </div>
 
-        <!-- Room link + copy + chat (shown after joining) -->
         <div id="roomContent" style="display: none;">
             <div class="room-info">
                 <div class="room-url">
@@ -81,24 +79,23 @@
             document.getElementById('copyBtn').addEventListener('click', () => {
                 document.getElementById('roomUrl').select();
                 document.execCommand('copy');
-                const btn = document.getElementById('copyBtn');
-                btn.textContent = 'copied!';
-                setTimeout(() => btn.textContent = 'copy', 2000);
+                document.getElementById('copyBtn').textContent = 'copied!';
+                setTimeout(() => document.getElementById('copyBtn').textContent = 'copy', 2000);
             });
 
             const chatInput = document.getElementById('chatInput');
             const sendChatBtn = document.getElementById('sendChatBtn');
             
-            function sendChatMessage() {
+            function sendChat() {
                 if (chatInput.value.trim() && webrtc) {
                     webrtc.sendChatMessage(chatInput.value);
                     chatInput.value = '';
                 }
             }
 
-            sendChatBtn.addEventListener('click', sendChatMessage);
+            sendChatBtn.addEventListener('click', sendChat);
             chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendChatMessage();
+                if (e.key === 'Enter') sendChat();
             });
         }
 
@@ -106,7 +103,6 @@
             const mode = sessionStorage.getItem(`mode_${roomId}`) || 'camera';
             const chatOnly = mode === 'chat';
             
-            // Hide video grid if chat only
             if (chatOnly) {
                 document.getElementById('videoGrid').style.display = 'none';
             }
@@ -198,7 +194,7 @@
         const creatorToken = sessionStorage.getItem(`creator_${roomId}`);
         
         if (creatorToken) {
-            // Creator: join immediately, show content
+            // Creator: join immediately
             joinRoom();
         } else {
             // Guest: check if password needed
@@ -218,7 +214,6 @@
                             document.getElementById('passwordSection').style.display = 'flex';
                             updateStatus('password required');
                         } else {
-                            // No password, join immediately
                             joinRoom();
                         }
                     } else {
