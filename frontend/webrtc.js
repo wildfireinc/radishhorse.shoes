@@ -66,7 +66,7 @@ class WebRTCManager {
     }
 
     initSocket() {
-        const socketUrl = window.SOCKET_URL || '';
+        const socketUrl = window.SOCKET_URL || window.API_BASE || '';
         this.socket = socketUrl ? io(socketUrl) : io();
         
         this.socket.on('connect', () => {
