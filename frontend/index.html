@@ -141,6 +141,10 @@
                     }
 
                     if (res.ok && data.room_id) {
+                        // Store creator token in sessionStorage
+                        const creatorToken = data.creator_token || Date.now().toString();
+                        sessionStorage.setItem(`creator_${data.room_id}`, creatorToken);
+                        
                         showStatus('room created! redirecting...');
                         setTimeout(() => {
                             window.location.href = `/${data.room_id}`;

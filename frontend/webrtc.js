@@ -96,7 +96,8 @@ class WebRTCManager {
     }
 
     handleChatMessage(message, isFromOther) {
-        const chatMessages = document.getElementById('chatMessages');
+        // Try both chat containers (creator and guest)
+        const chatMessages = document.getElementById('chatMessages') || document.getElementById('guestChatMessages');
         if (!chatMessages) return;
 
         const div = document.createElement('div');
