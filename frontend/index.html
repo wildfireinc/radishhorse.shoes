@@ -150,17 +150,28 @@
         // Extend the success callback to initialize camera
         const originalSuccess = window.onTurnstileSuccess;
         window.onTurnstileSuccess = function(token) {
-            if (originalSuccess) originalSuccess(token);
+            console.log('=== CALLBACK OVERRIDE FIRED ===');
+            if (originalSuccess) {
+                console.log('Calling original callback');
+                originalSuccess(token);
+            }
             turnstileToken = token || window.turnstileToken;
-            // Initialize camera after a short delay
+            // Initialize camera after a short delay to ensure DOM is ready
             setTimeout(() => {
-                initCamera().catch(err => console.error('Camera init error:', err));
-            }, 200);
+                console.log('Calling initCamera from callback');
+                initCamera().catch(err => {
+                    console.error('Camera init error in callback:', err);
+                    showStatus('error: camera initialization failed');
+                });
+            }, 300);
         };
 
         async function initCamera() {
+            console.log('=== INIT CAMERA CALLED ===');
+            
             // Check if we already have a stream
             if (localStream) {
+                console.log('Reusing existing stream');
                 const video = document.getElementById('localVideo');
                 if (video && video.srcObject !== localStream) {
                     video.srcObject = localStream;
@@ -171,21 +182,51 @@
                 return;
             }
             
+            // Check if mediaDevices is available
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.error('getUserMedia not supported');
+                showStatus('error: camera not supported');
+                return;
+            }
+            
             try {
+                console.log('Requesting camera/mic access...');
                 localStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: true, 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    }, 
                     audio: true 
                 });
+                console.log('Camera/mic access granted, stream:', localStream);
+                
                 const video = document.getElementById('localVideo');
                 if (video) {
+                    console.log('Setting video srcObject');
                     video.srcObject = localStream;
+                    
+                    // Wait for video to be ready
+                    video.onloadedmetadata = () => {
+                        console.log('Video metadata loaded');
+                        video.play().then(() => {
+                            console.log('Video playing');
+                        }).catch(err => {
+                            console.error('Error playing local video:', err);
+                            showStatus('error: video playback failed');
+                        });
+                    };
+                    
+                    // Also try playing immediately
                     video.play().catch(err => {
-                        console.error('Error playing local video:', err);
+                        console.warn('Immediate play failed, will retry:', err);
                     });
+                } else {
+                    console.error('Video element not found!');
                 }
             } catch (err) {
                 console.error('Error accessing camera:', err);
-                showStatus('error: camera access denied');
+                showStatus('error: camera access denied - ' + err.message);
                 setTimeout(hideStatus, 5000);
             }
         }
