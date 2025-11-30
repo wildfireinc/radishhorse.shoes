@@ -39,6 +39,14 @@
             <!-- Remote videos will be added here dynamically when peers connect -->
         </div>
 
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" placeholder="type something..." class="neon-input" maxlength="200">
+                <button id="sendChatBtn" class="neon-button small">send</button>
+            </div>
+        </div>
+
         <div class="room-info">
             <div class="room-url">
                 <span>room:</span>
@@ -89,6 +97,29 @@
         // Update status function
         function updateStatus(status) {
             document.getElementById('status').textContent = status;
+        }
+
+        // Chat functionality
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        
+        function sendChatMessage() {
+            if (chatInput && chatInput.value.trim() && webrtc) {
+                webrtc.sendChatMessage(chatInput.value);
+                chatInput.value = '';
+            }
+        }
+        
+        if (sendChatBtn) {
+            sendChatBtn.addEventListener('click', sendChatMessage);
+        }
+        
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
+            });
         }
 
         // Join button (for password-protected rooms)

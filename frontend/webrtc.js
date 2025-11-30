@@ -140,6 +140,40 @@ class WebRTCManager {
             console.log('Socket disconnected');
             this.updateStatus('disconnected');
         });
+
+        // Chat messages
+        this.socket.on('chat_message', (data) => {
+            this.handleChatMessage(data.message, data.sid !== this.socket.id);
+        });
+    }
+
+    sendChatMessage(message) {
+        if (this.socket && this.socket.connected && message.trim()) {
+            this.socket.emit('chat_message', {
+                room_id: this.roomId,
+                message: message.trim()
+            });
+            // Show own message immediately
+            this.handleChatMessage(message.trim(), false);
+        }
+    }
+
+    handleChatMessage(message, isFromOther) {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'chat-message' + (isFromOther ? '' : ' own');
+        messageDiv.textContent = message;
+        chatMessages.appendChild(messageDiv);
+        
+        // Auto-scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Limit messages (keep last 50)
+        while (chatMessages.children.length > 50) {
+            chatMessages.removeChild(chatMessages.firstChild);
+        }
     }
 
     async joinRoom(password = '') {
