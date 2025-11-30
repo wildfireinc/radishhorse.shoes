@@ -12,12 +12,26 @@
         window.SOCKET_URL = 'https://api.radishhorse.shoes';
         window.TURNSTILE_SITE_KEY = '0x4AAAAAACD2gD3et3LnZ5PS';
         
-        // Set Turnstile site key immediately so widget can render
-        window.addEventListener('DOMContentLoaded', function() {
-            const turnstileWidget = document.getElementById('turnstileWidget');
-            if (turnstileWidget && !turnstileWidget.getAttribute('data-sitekey')) {
-                turnstileWidget.setAttribute('data-sitekey', window.TURNSTILE_SITE_KEY);
+        // Wait for Turnstile to load, then render widget
+        window.addEventListener('load', function() {
+            function renderTurnstile() {
+                const turnstileWidget = document.getElementById('turnstileWidget');
+                if (turnstileWidget && window.turnstile) {
+                    if (!turnstileWidget.getAttribute('data-sitekey')) {
+                        turnstileWidget.setAttribute('data-sitekey', window.TURNSTILE_SITE_KEY);
+                    }
+                    // Explicitly render if not already rendered
+                    try {
+                        window.turnstile.render(turnstileWidget);
+                    } catch (e) {
+                        // Already rendered or error, that's fine
+                    }
+                } else if (turnstileWidget && !window.turnstile) {
+                    // Turnstile not loaded yet, retry
+                    setTimeout(renderTurnstile, 100);
+                }
             }
+            renderTurnstile();
         });
         
         // Fetch backend configuration
@@ -57,7 +71,7 @@
         <div class="gate-content">
             <h1 class="neon-logo">radishhorse.shoes</h1>
             <div class="turnstile-container">
-                <div class="cf-turnstile" data-sitekey="0x4AAAAAACD2gD3et3LnZ5PS" data-callback="onTurnstileSuccess" data-error-callback="onTurnstileError" id="turnstileWidget"></div>
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAACD2gD3et3LnZ5PS" data-callback="onTurnstileSuccess" data-error-callback="onTurnstileError" data-expired-callback="onTurnstileError" id="turnstileWidget"></div>
             </div>
         </div>
     </div>
@@ -111,19 +125,41 @@
 
         // Turnstile success callback
         window.onTurnstileSuccess = async function(token) {
-            console.log('Turnstile verified, token received');
+            console.log('Turnstile verified, token received:', token ? 'yes' : 'no');
+            if (!token) {
+                console.error('Turnstile returned empty token');
+                return;
+            }
             turnstileToken = token;
             // Hide gate, show main content
-            document.getElementById('turnstileGate').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'flex';
+            const gate = document.getElementById('turnstileGate');
+            const main = document.getElementById('mainContent');
+            if (gate) gate.style.display = 'none';
+            if (main) main.style.display = 'flex';
             // Initialize camera after gate passes
             await initCamera();
         };
         
         // Turnstile error callback
-        window.onTurnstileError = function() {
-            console.error('Turnstile verification failed');
-            alert('Verification failed. Please try again.');
+        window.onTurnstileError = function(error) {
+            console.error('Turnstile verification failed:', error);
+            const gate = document.getElementById('turnstileGate');
+            if (gate) {
+                // Show error message
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'status';
+                errorMsg.style.color = '#ff00ff';
+                errorMsg.textContent = 'verification failed - try again';
+                gate.querySelector('.gate-content').appendChild(errorMsg);
+                setTimeout(() => errorMsg.remove(), 3000);
+                
+                // Reset widget
+                if (window.turnstile) {
+                    setTimeout(() => {
+                        window.turnstile.reset();
+                    }, 1000);
+                }
+            }
         };
 
         async function initCamera() {
