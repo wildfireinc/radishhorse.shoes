@@ -105,14 +105,14 @@
         let localStream = null;
 
         // Turnstile success callback
-        window.onTurnstileSuccess = function(token) {
+        window.onTurnstileSuccess = async function(token) {
             console.log('Turnstile verified, token received');
             turnstileToken = token;
             // Hide gate, show main content
             document.getElementById('turnstileGate').style.display = 'none';
             document.getElementById('mainContent').style.display = 'flex';
             // Initialize camera after gate passes
-            initCamera();
+            await initCamera();
         };
         
         // Turnstile error callback
@@ -128,9 +128,16 @@
                     audio: true 
                 });
                 const video = document.getElementById('localVideo');
-                video.srcObject = localStream;
+                if (video) {
+                    video.srcObject = localStream;
+                    video.play().catch(err => {
+                        console.error('Error playing local video:', err);
+                    });
+                }
             } catch (err) {
                 console.error('Error accessing camera:', err);
+                showStatus('error: camera access denied');
+                setTimeout(hideStatus, 5000);
             }
         }
 

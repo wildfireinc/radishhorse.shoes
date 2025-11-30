@@ -57,8 +57,11 @@ class WebRTCManager {
             
             // Only set local video on index page, not room page
             const localVideo = document.getElementById('localVideo');
-            if (localVideo && window.location.pathname === '/') {
+            if (localVideo && (window.location.pathname === '/' || window.location.pathname === '')) {
                 localVideo.srcObject = this.localStream;
+                localVideo.play().catch(err => {
+                    console.error('Error playing local video:', err);
+                });
             }
         } catch (err) {
             console.error('Error accessing media devices:', err);
