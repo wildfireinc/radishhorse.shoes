@@ -11,9 +11,9 @@ class WebRTCManager {
     }
 
     async init() {
+        this.initSocket();
         await this.getTurnConfig();
         await this.initLocalStream();
-        this.initSocket();
     }
 
     async getTurnConfig() {
@@ -51,6 +51,12 @@ class WebRTCManager {
     initSocket() {
         const socketUrl = window.SOCKET_URL || window.API_BASE || '';
         this.socket = socketUrl ? io(socketUrl) : io();
+        
+        if (!this.socket) {
+            console.error('Failed to initialize socket');
+            this.updateStatus('error: failed to initialize socket');
+            return;
+        }
 
         this.socket.on('connect', () => {
             this.updateStatus('connected');
