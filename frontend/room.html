@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>radishhorse.shoes - Room</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container room-container">
+        <div class="logo-container">
+            <h1 class="neon-logo small">radishhorse.shoes</h1>
+        </div>
+
+        <div class="video-grid">
+            <div class="video-wrapper">
+                <video id="localVideo" autoplay muted playsinline></video>
+                <div class="video-label">you</div>
+            </div>
+            <div class="video-wrapper">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <div class="video-label">them</div>
+            </div>
+        </div>
+
+        <div class="room-info">
+            <div class="room-url">
+                <span>room:</span>
+                <input type="text" id="roomUrl" readonly class="neon-input">
+                <button id="copyBtn" class="neon-button small">copy</button>
+            </div>
+        </div>
+
+        <div class="password-section" id="passwordSection" style="display: none;">
+            <input type="password" id="passwordInput" placeholder="enter password" class="neon-input">
+            <button id="joinBtn" class="neon-button small">join</button>
+        </div>
+
+        <div class="controls">
+            <button id="setPasswordBtn" class="neon-button">set password</button>
+            <button id="rouletteBtn" class="neon-button">see what happens</button>
+            <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
+        </div>
+
+        <div class="status" id="status">connecting...</div>
+
+        <div class="creator-credit">
+            creator: @yourhandle
+        </div>
+    </div>
+
+    <script src="webrtc.js"></script>
+    <script>
+        // Get room ID from URL
+        const pathParts = window.location.pathname.split('/');
+        const roomId = pathParts[pathParts.length - 1];
+        let webrtc = null;
+        
+        // Set room URL
+        document.getElementById('roomUrl').value = window.location.href;
+
+        // Copy room URL
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const urlInput = document.getElementById('roomUrl');
+            urlInput.select();
+            document.execCommand('copy');
+            const btn = document.getElementById('copyBtn');
+            const originalText = btn.textContent;
+            btn.textContent = 'copied!';
+            setTimeout(() => btn.textContent = originalText, 2000);
+        });
+
+        // Set password button
+        document.getElementById('setPasswordBtn').addEventListener('click', async () => {
+            const password = prompt('Enter password (leave empty to remove):');
+            if (password !== null) {
+                try {
+                    const response = await fetch(`/api/room/${roomId}/password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'set',
+                            password: password
+                        })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert('Password ' + (data.password_protected ? 'set' : 'removed'));
+                    }
+                } catch (err) {
+                    console.error('Error setting password:', err);
+                }
+            }
+        });
+
+        // Update status function
+        function updateStatus(status) {
+            document.getElementById('status').textContent = status;
+        }
+
+        // Join button (for password-protected rooms)
+        document.getElementById('joinBtn').addEventListener('click', async () => {
+            const password = document.getElementById('passwordInput').value;
+            if (!webrtc) {
+                webrtc = new WebRTCManager(roomId);
+                webrtc.onStatusChange = (status) => {
+                    document.getElementById('status').textContent = status;
+                };
+            }
+            await webrtc.joinRoom(password);
+        });
+
+        // Roulette button
+        document.getElementById('rouletteBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/roulette');
+                const data = await response.json();
+                if (response.ok && data.room_id !== roomId) {
+                    window.location.href = `/room/${data.room_id}`;
+                } else {
+                    alert('No other active rooms available');
+                }
+            } catch (err) {
+                console.error('Error finding room:', err);
+            }
+        });
+
+        // Chaos button
+        document.getElementById('chaosBtn').addEventListener('click', () => {
+            // Disconnect and redirect
+            if (webrtc) {
+                webrtc.disconnect();
+            }
+            const effects = [
+                () => {
+                    document.body.style.filter = 'hue-rotate(180deg) brightness(2)';
+                    setTimeout(() => {
+                        document.body.style.filter = '';
+                        window.location.href = '/';
+                    }, 1000);
+                },
+                () => {
+                    const glitch = document.createElement('div');
+                    glitch.className = 'glitch-overlay';
+                    document.body.appendChild(glitch);
+                    setTimeout(() => {
+                        glitch.remove();
+                        window.location.href = '/';
+                    }, 800);
+                },
+                () => {
+                    document.body.style.animation = 'shake 0.5s';
+                    setTimeout(() => {
+                        document.body.style.animation = '';
+                        window.location.href = '/';
+                    }, 500);
+                }
+            ];
+            const randomEffect = effects[Math.floor(Math.random() * effects.length)];
+            randomEffect();
+        });
+
+        // Check if room requires password
+        fetch(`/api/room/${roomId}/exists`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.exists) {
+                    if (data.password_protected) {
+                        document.getElementById('passwordSection').style.display = 'flex';
+                        updateStatus('password required');
+                    } else {
+                        webrtc = new WebRTCManager(roomId);
+                        webrtc.onStatusChange = updateStatus;
+                        webrtc.joinRoom();
+                    }
+                } else {
+                    updateStatus('room not found');
+                }
+            })
+            .catch(err => {
+                console.error('Error checking room:', err);
+                updateStatus('error');
+            });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>radishhorse.shoes</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <h1 class="neon-logo">radishhorse.shoes</h1>
+        </div>
+
+        <div class="video-preview-container">
+            <video id="localVideo" autoplay muted playsinline></video>
+        </div>
+
+        <div class="controls">
+            <button id="setPasswordBtn" class="neon-button">set password</button>
+            <button id="rouletteBtn" class="neon-button">see what happens</button>
+            <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
+        </div>
+
+        <div class="room-creation">
+            <form id="createRoomForm">
+                <div class="form-group">
+                    <input type="text" id="roomPassword" placeholder="optional password" class="neon-input">
+                </div>
+                <div class="h-captcha" data-sitekey="YOUR_HCAPTCHA_SITE_KEY"></div>
+                <button type="submit" class="neon-button">create room</button>
+            </form>
+        </div>
+
+        <div class="creator-credit">
+            creator: @yourhandle
+        </div>
+    </div>
+
+    <script src="webrtc.js"></script>
+    <script>
+        // Initialize camera on load
+        let localStream = null;
+        
+        async function initCamera() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                const video = document.getElementById('localVideo');
+                video.srcObject = localStream;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+            }
+        }
+
+        // Room creation
+        document.getElementById('createRoomForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('roomPassword').value.trim();
+            const captchaToken = hcaptcha.getResponse();
+            
+            if (!captchaToken) {
+                alert('Please complete the CAPTCHA');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/create-room', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        password: password,
+                        captcha_token: captchaToken
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    window.location.href = `/room/${data.room_id}`;
+                } else {
+                    alert('Failed to create room: ' + (data.error || 'Unknown error'));
+                    hcaptcha.reset();
+                }
+            } catch (err) {
+                console.error('Error creating room:', err);
+                alert('Failed to create room');
+            }
+        });
+
+        // Set password button (on landing page - does nothing, pure chaos)
+        document.getElementById('setPasswordBtn').addEventListener('click', () => {
+            // Pure chaos - button does nothing on landing page
+            const colors = ['#00ffff', '#ff00ff', '#ff00aa'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            document.getElementById('setPasswordBtn').style.borderColor = randomColor;
+            setTimeout(() => {
+                document.getElementById('setPasswordBtn').style.borderColor = '';
+            }, 500);
+        });
+
+        // Roulette button
+        document.getElementById('rouletteBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/roulette');
+                const data = await response.json();
+                if (response.ok) {
+                    window.location.href = `/room/${data.room_id}`;
+                } else {
+                    alert('No active rooms available. Create one first!');
+                }
+            } catch (err) {
+                console.error('Error finding room:', err);
+            }
+        });
+
+        // Chaos button
+        document.getElementById('chaosBtn').addEventListener('click', () => {
+            // Random chaotic effects
+            const effects = [
+                () => {
+                    document.body.style.filter = 'hue-rotate(180deg)';
+                    setTimeout(() => document.body.style.filter = '', 1000);
+                },
+                () => {
+                    document.body.style.transform = 'rotate(5deg)';
+                    setTimeout(() => document.body.style.transform = '', 500);
+                },
+                () => {
+                    window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank');
+                },
+                () => {
+                    const glitch = document.createElement('div');
+                    glitch.className = 'glitch-overlay';
+                    document.body.appendChild(glitch);
+                    setTimeout(() => glitch.remove(), 500);
+                }
+            ];
+            const randomEffect = effects[Math.floor(Math.random() * effects.length)];
+            randomEffect();
+        });
+
+        // Initialize on load
+        initCamera();
+    </script>
+</body>
+</html>
+
