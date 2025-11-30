@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>radishhorse.shoes</title>
     <link rel="stylesheet" href="styles.css">
+    <script>
+        // Backend API server
+        window.BACKEND_URL = 'https://api.radishhorse.shoes';
+        window.API_BASE = 'https://api.radishhorse.shoes';
+        window.SOCKET_URL = 'https://api.radishhorse.shoes';
+    </script>
     <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
@@ -69,7 +75,7 @@
             }
 
             try {
-                const response = await fetch('/api/create-room', {
+                const response = await fetch(`${window.API_BASE || ''}/api/create-room`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -105,7 +111,7 @@
         // Roulette button
         document.getElementById('rouletteBtn').addEventListener('click', async () => {
             try {
-                const response = await fetch('/api/roulette');
+                const response = await fetch(`${window.API_BASE || ''}/api/roulette`);
                 const data = await response.json();
                 if (response.ok) {
                     window.location.href = `/room/${data.room_id}`;

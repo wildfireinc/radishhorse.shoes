@@ -1,0 +1,21 @@
+{
+  "routes": [
+    {
+      "src": "/room/(.*)",
+      "dest": "/frontend/room.html"
+    },
+    {
+      "src": "/(.*\\.(css|js))",
+      "dest": "/frontend/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/frontend/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/index.html"
+    }
+  ]
+}
+

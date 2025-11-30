@@ -20,7 +20,7 @@ class WebRTCManager {
 
     async getTurnConfig() {
         try {
-            const response = await fetch('/api/turn-config');
+            const response = await fetch(`${window.API_BASE || ''}/api/turn-config`);
             const data = await response.json();
             this.turnConfig = data.urls.length > 0 ? {
                 iceServers: [
@@ -66,7 +66,8 @@ class WebRTCManager {
     }
 
     initSocket() {
-        this.socket = io();
+        const socketUrl = window.SOCKET_URL || '';
+        this.socket = socketUrl ? io(socketUrl) : io();
         
         this.socket.on('connect', () => {
             console.log('Socket connected');
@@ -135,7 +136,7 @@ class WebRTCManager {
         // Verify password if needed
         if (password) {
             try {
-                const response = await fetch(`/api/room/${this.roomId}/password`, {
+                const response = await fetch(`${window.API_BASE || ''}/api/room/${this.roomId}/password`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

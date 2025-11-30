@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>radishhorse.shoes - Room</title>
     <link rel="stylesheet" href="styles.css">
+    <script>
+        // Backend API server
+        window.BACKEND_URL = 'https://api.radishhorse.shoes';
+        window.API_BASE = 'https://api.radishhorse.shoes';
+        window.SOCKET_URL = 'https://api.radishhorse.shoes';
+    </script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
@@ -76,7 +82,7 @@
             const password = prompt('Enter password (leave empty to remove):');
             if (password !== null) {
                 try {
-                    const response = await fetch(`/api/room/${roomId}/password`, {
+                    const response = await fetch(`${window.API_BASE || ''}/api/room/${roomId}/password`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -114,7 +120,7 @@
         // Roulette button
         document.getElementById('rouletteBtn').addEventListener('click', async () => {
             try {
-                const response = await fetch('/api/roulette');
+                const response = await fetch(`${window.API_BASE || ''}/api/roulette`);
                 const data = await response.json();
                 if (response.ok && data.room_id !== roomId) {
                     window.location.href = `/room/${data.room_id}`;
@@ -162,7 +168,7 @@
         });
 
         // Check if room requires password
-        fetch(`/api/room/${roomId}/exists`)
+        fetch(`${window.API_BASE || ''}/api/room/${roomId}/exists`)
             .then(res => res.json())
             .then(data => {
                 if (data.exists) {
