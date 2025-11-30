@@ -12,6 +12,61 @@
         window.SOCKET_URL = 'https://api.radishhorse.shoes';
         window.TURNSTILE_SITE_KEY = '0x4AAAAAACD2gD3et3LnZ5PS';
         
+        // Define Turnstile callbacks BEFORE script loads
+        window.onTurnstileSuccess = function(token) {
+            console.log('=== TURNSTILE SUCCESS CALLBACK FIRED ===');
+            console.log('Token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+            
+            if (!token) {
+                console.error('Turnstile returned empty token');
+                if (window.turnstile) {
+                    window.turnstile.reset();
+                }
+                return;
+            }
+            
+            window.turnstileToken = token;
+            
+            // Hide gate, show main content
+            const gate = document.getElementById('turnstileGate');
+            const main = document.getElementById('mainContent');
+            
+            console.log('Gate found:', !!gate);
+            console.log('Main found:', !!main);
+            
+            if (gate) {
+                gate.style.display = 'none';
+                gate.style.visibility = 'hidden';
+                gate.style.opacity = '0';
+                gate.style.zIndex = '-1';
+                console.log('Gate hidden');
+            } else {
+                console.error('Gate element not found!');
+            }
+            
+            if (main) {
+                main.style.display = 'flex';
+                main.style.visibility = 'visible';
+                main.style.opacity = '1';
+                main.style.zIndex = '10';
+                console.log('Main content shown');
+            } else {
+                console.error('Main content element not found!');
+            }
+        };
+        
+        window.onTurnstileError = function(error) {
+            console.error('Turnstile error:', error);
+        };
+        
+        window.onTurnstileExpired = function() {
+            console.log('Turnstile expired');
+            window.turnstileToken = null;
+            if (window.turnstile) {
+                window.turnstile.reset();
+            }
+        };
+        
         // Fetch backend configuration
         (async function() {
             try {
@@ -89,79 +144,17 @@
     <script src="/webrtc.js"></script>
     <script>
 
-        let turnstileToken = null;
+        let turnstileToken = window.turnstileToken || null;
         let localStream = null;
-
-        // Turnstile success callback - MUST be global
+        
+        // Override the callback to also initialize camera
+        const originalCallback = window.onTurnstileSuccess;
         window.onTurnstileSuccess = function(token) {
-            console.log('=== TURNSTILE SUCCESS CALLBACK FIRED ===');
-            console.log('Token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
-            
-            if (!token) {
-                console.error('Turnstile returned empty token');
-                if (window.turnstile) {
-                    window.turnstile.reset();
-                }
-                return;
-            }
-            
+            originalCallback(token);
             turnstileToken = token;
-            
-            // Hide gate, show main content
-            const gate = document.getElementById('turnstileGate');
-            const main = document.getElementById('mainContent');
-            
-            console.log('Gate found:', !!gate);
-            console.log('Main found:', !!main);
-            
-            if (gate) {
-                gate.style.display = 'none';
-                gate.style.visibility = 'hidden';
-                gate.style.opacity = '0';
-                gate.style.zIndex = '-1';
-                console.log('Gate hidden');
-            } else {
-                console.error('Gate element not found!');
-            }
-            
-            if (main) {
-                main.style.display = 'flex';
-                main.style.visibility = 'visible';
-                main.style.opacity = '1';
-                main.style.zIndex = '10';
-                console.log('Main content shown');
-            } else {
-                console.error('Main content element not found!');
-            }
-            
-            // Initialize camera after gate passes
             setTimeout(() => {
                 initCamera();
             }, 100);
-        };
-        
-        // Turnstile error callback
-        window.onTurnstileError = function(error) {
-            console.error('Turnstile error:', error);
-            const gate = document.getElementById('turnstileGate');
-            if (gate) {
-                const errorMsg = document.createElement('div');
-                errorMsg.className = 'status';
-                errorMsg.style.color = '#ff00ff';
-                errorMsg.style.marginTop = '1rem';
-                errorMsg.textContent = 'verification failed - try again';
-                gate.querySelector('.gate-content').appendChild(errorMsg);
-                setTimeout(() => errorMsg.remove(), 3000);
-            }
-        };
-        
-        // Turnstile expired callback
-        window.onTurnstileExpired = function() {
-            console.log('Turnstile expired');
-            turnstileToken = null;
-            if (window.turnstile) {
-                window.turnstile.reset();
-            }
         };
 
         async function initCamera() {
