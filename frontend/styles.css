@@ -335,6 +335,20 @@ body::before {
     font-family: 'Rajdhani', sans-serif;
     text-transform: lowercase;
     z-index: 10;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.creator-credit:hover {
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    border-color: #00ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    transform: translateY(-2px);
 }
 
 .glitch-overlay {
