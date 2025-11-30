@@ -182,15 +182,21 @@
                     const apiUrl = `${window.API_BASE || 'https://api.radishhorse.shoes'}/api/create-room`;
                     showStatus('calling ' + apiUrl);
                     
+                    // Add timeout
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                    
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             password: password,
                             turnstile_token: turnstileToken
-                        })
+                        }),
+                        signal: controller.signal
                     });
-
+                    
+                    clearTimeout(timeoutId);
                     showStatus('got response: ' + response.status);
 
                     let data;
@@ -227,7 +233,13 @@
                         }
                     }
                 } catch (err) {
-                    showStatus('error: ' + err.message);
+                    let errorMsg = err.message;
+                    if (err.name === 'AbortError') {
+                        errorMsg = 'Request timeout - server not responding';
+                    } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                        errorMsg = 'Network error - check connection or CORS';
+                    }
+                    showStatus('error: ' + errorMsg);
                     if (createRoomBtn) {
                         createRoomBtn.disabled = false;
                         createRoomBtn.textContent = 'create room';
