@@ -11,11 +11,22 @@
         window.API_BASE = 'https://api.radishhorse.shoes';
         window.SOCKET_URL = 'https://api.radishhorse.shoes';
     </script>
-    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <!-- Turnstile Gate Screen -->
+    <div id="turnstileGate" class="turnstile-gate">
+        <div class="gate-content">
+            <h1 class="neon-logo">radishhorse.shoes</h1>
+            <div class="turnstile-container">
+                <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY" data-callback="onTurnstileSuccess"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Interface (hidden until Turnstile verified) -->
+    <div id="mainContent" class="container" style="display: none;">
         <div class="logo-container">
             <h1 class="neon-logo">radishhorse.shoes</h1>
         </div>
@@ -35,7 +46,6 @@
                 <div class="form-group">
                     <input type="text" id="roomPassword" placeholder="optional password" class="neon-input">
                 </div>
-                <div class="h-captcha" data-sitekey="YOUR_HCAPTCHA_SITE_KEY"></div>
                 <button type="submit" class="neon-button">create room</button>
             </form>
         </div>
@@ -47,9 +57,19 @@
 
     <script src="webrtc.js"></script>
     <script>
-        // Initialize camera on load
+        let turnstileToken = null;
         let localStream = null;
-        
+
+        // Turnstile success callback
+        window.onTurnstileSuccess = function(token) {
+            turnstileToken = token;
+            // Hide gate, show main content
+            document.getElementById('turnstileGate').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'flex';
+            // Initialize camera after gate passes
+            initCamera();
+        };
+
         async function initCamera() {
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ 
@@ -67,10 +87,9 @@
         document.getElementById('createRoomForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const password = document.getElementById('roomPassword').value.trim();
-            const captchaToken = hcaptcha.getResponse();
             
-            if (!captchaToken) {
-                alert('Please complete the CAPTCHA');
+            if (!turnstileToken) {
+                alert('Please complete verification');
                 return;
             }
 
@@ -80,7 +99,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         password: password,
-                        captcha_token: captchaToken
+                        turnstile_token: turnstileToken
                     })
                 });
 
@@ -89,7 +108,10 @@
                     window.location.href = `/room/${data.room_id}`;
                 } else {
                     alert('Failed to create room: ' + (data.error || 'Unknown error'));
-                    hcaptcha.reset();
+                    // Reset Turnstile
+                    if (window.turnstile) {
+                        window.turnstile.reset();
+                    }
                 }
             } catch (err) {
                 console.error('Error creating room:', err);
@@ -110,6 +132,10 @@
 
         // Roulette button
         document.getElementById('rouletteBtn').addEventListener('click', async () => {
+            if (!turnstileToken) {
+                alert('Please complete verification first');
+                return;
+            }
             try {
                 const response = await fetch(`${window.API_BASE || ''}/api/roulette`);
                 const data = await response.json();
@@ -148,9 +174,6 @@
             const randomEffect = effects[Math.floor(Math.random() * effects.length)];
             randomEffect();
         });
-
-        // Initialize on load
-        initCamera();
     </script>
 </body>
 </html>
