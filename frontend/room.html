@@ -107,18 +107,26 @@
             webrtc.onStatusChange = updateStatus;
             
             // Wait for WebRTCManager to finish initialization
-            await new Promise(resolve => setTimeout(resolve, 500));
+            let attempts = 0;
+            while (!webrtc.socket && attempts < 10) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
             
             // Check if socket exists
             if (!webrtc.socket) {
-                updateStatus('error: socket not ready');
+                updateStatus('error: socket not initialized - backend may be down');
                 return;
             }
             
             webrtc.joinRoom(password).then(() => {
                 showRoomContent();
             }).catch((err) => {
-                updateStatus('error: ' + (err.message || err || 'failed to join'));
+                const errMsg = err.message || err || 'failed to join';
+                updateStatus('error: ' + errMsg);
+                if (errMsg.includes('timeout') || errMsg.includes('connect')) {
+                    updateStatus('error: backend server not reachable - check api.radishhorse.shoes');
+                }
             });
         }
 

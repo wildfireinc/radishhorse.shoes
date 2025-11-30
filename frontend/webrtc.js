@@ -76,7 +76,16 @@ class WebRTCManager {
         
         this.socket.on('connect_error', (err) => {
             console.error('Socket connection error:', err);
-            this.updateStatus('error: cannot connect to server');
+            this.updateStatus('error: cannot connect to server - check backend is running');
+        });
+        
+        this.socket.on('disconnect', (reason) => {
+            console.log('Socket disconnected:', reason);
+            if (reason === 'io server disconnect') {
+                this.updateStatus('disconnected by server');
+            } else {
+                this.updateStatus('disconnected');
+            }
         });
         this.socket.on('joined', () => {
             this.updateStatus('waiting for peer...');
