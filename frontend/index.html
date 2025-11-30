@@ -164,9 +164,8 @@
         window.onTurnstileSuccess = function(token) {
             if (originalSuccess) originalSuccess(token);
             turnstileToken = token || window.turnstileToken;
-            setTimeout(() => {
-                initCamera();
-            }, 100);
+            // Initialize camera immediately
+            initCamera();
         };
 
         // Room creation
