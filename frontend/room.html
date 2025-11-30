@@ -59,8 +59,11 @@
             <button id="joinBtn" class="neon-button small">join</button>
         </div>
 
+        <div class="room-creation" style="margin-top: 1rem;">
+            <input type="text" id="roomPasswordInput" placeholder="set password (optional)" class="neon-input" style="max-width: 300px;">
+        </div>
+
         <div class="controls">
-            <button id="setPasswordBtn" class="neon-button">set password</button>
             <button id="rouletteBtn" class="neon-button">see what happens</button>
             <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
         </div>
@@ -93,28 +96,6 @@
             setTimeout(() => btn.textContent = originalText, 2000);
         });
 
-        // Set password button
-        document.getElementById('setPasswordBtn').addEventListener('click', async () => {
-            const password = prompt('Enter password (leave empty to remove):');
-            if (password !== null) {
-                try {
-                    const response = await fetch(`${window.API_BASE || ''}/api/room/${roomId}/password`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'set',
-                            password: password
-                        })
-                    });
-                    const data = await response.json();
-                    if (response.ok) {
-                        alert('Password ' + (data.password_protected ? 'set' : 'removed'));
-                    }
-                } catch (err) {
-                    console.error('Error setting password:', err);
-                }
-            }
-        });
 
         // Update status function
         function updateStatus(status) {
@@ -132,6 +113,32 @@
             }
             await webrtc.joinRoom(password);
         });
+
+        // Set password input (auto-updates on change)
+        const roomPasswordInput = document.getElementById('roomPasswordInput');
+        if (roomPasswordInput) {
+            let passwordTimeout;
+            roomPasswordInput.addEventListener('input', async () => {
+                clearTimeout(passwordTimeout);
+                const password = roomPasswordInput.value.trim();
+                
+                passwordTimeout = setTimeout(async () => {
+                    try {
+                        const response = await fetch(`${window.API_BASE || ''}/api/room/${roomId}/password`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                action: 'set',
+                                password: password
+                            })
+                        });
+                        // Silent update - no alert
+                    } catch (err) {
+                        console.error('Error setting password:', err);
+                    }
+                }, 1000); // Wait 1 second after typing stops
+            });
+        }
 
         // Roulette button
         document.getElementById('rouletteBtn').addEventListener('click', async () => {

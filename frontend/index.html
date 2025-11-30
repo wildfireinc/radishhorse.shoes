@@ -73,7 +73,6 @@
         </div>
 
         <div class="controls">
-            <button id="setPasswordBtn" class="neon-button">set password</button>
             <button id="rouletteBtn" class="neon-button">see what happens</button>
             <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
         </div>
@@ -139,10 +138,6 @@
                 createRoomStatus.textContent = msg;
                 createRoomStatus.style.display = 'block';
             }
-            // Also alert on mobile for visibility
-            if (window.innerWidth < 768) {
-                alert(msg);
-            }
         }
         
         function hideStatus() {
@@ -159,8 +154,6 @@
             createRoomForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                showStatus('clicked...');
                 
                 const password = document.getElementById('roomPassword')?.value.trim() || '';
                 
@@ -180,11 +173,10 @@
 
                 try {
                     const apiUrl = `${window.API_BASE || 'https://api.radishhorse.shoes'}/api/create-room`;
-                    showStatus('calling ' + apiUrl);
                     
                     // Add timeout
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
                     
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -197,7 +189,6 @@
                     });
                     
                     clearTimeout(timeoutId);
-                    showStatus('got response: ' + response.status);
 
                     let data;
                     try {
@@ -249,16 +240,6 @@
             });
         }
 
-        // Set password button (on landing page - does nothing, pure chaos)
-        document.getElementById('setPasswordBtn').addEventListener('click', () => {
-            // Pure chaos - button does nothing on landing page
-            const colors = ['#00ffff', '#ff00ff', '#ff00aa'];
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
-            document.getElementById('setPasswordBtn').style.borderColor = randomColor;
-            setTimeout(() => {
-                document.getElementById('setPasswordBtn').style.borderColor = '';
-            }, 500);
-        });
 
         // Roulette button
         document.getElementById('rouletteBtn').addEventListener('click', async () => {
