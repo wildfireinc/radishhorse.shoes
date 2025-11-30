@@ -127,6 +127,18 @@
         };
 
         async function initCamera() {
+            // Check if we already have a stream
+            if (localStream) {
+                const video = document.getElementById('localVideo');
+                if (video && video.srcObject !== localStream) {
+                    video.srcObject = localStream;
+                    video.play().catch(err => {
+                        console.error('Error playing local video:', err);
+                    });
+                }
+                return;
+            }
+            
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ 
                     video: true, 

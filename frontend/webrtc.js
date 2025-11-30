@@ -49,6 +49,11 @@ class WebRTCManager {
     }
 
     async initLocalStream() {
+        // Reuse existing stream if available (for room page)
+        if (this.localStream) {
+            return;
+        }
+        
         try {
             this.localStream = await navigator.mediaDevices.getUserMedia({
                 video: true,
@@ -89,7 +94,13 @@ class WebRTCManager {
 
         this.socket.on('error', (data) => {
             console.error('Socket error:', data.message);
-            this.updateStatus('error: ' + data.message);
+            const errorMsg = data.message || '';
+            if (errorMsg.includes('not found') || errorMsg.includes('Room not found') || errorMsg.includes('Invalid')) {
+                // Room doesn't exist - redirect to main
+                window.location.href = '/';
+            } else {
+                this.updateStatus('error: ' + errorMsg);
+            }
         });
 
         this.socket.on('user_joined', async (data) => {
@@ -148,6 +159,13 @@ class WebRTCManager {
                         password: password
                     })
                 });
+                
+                if (!response.ok) {
+                    // Room might not exist
+                    window.location.href = '/';
+                    return;
+                }
+                
                 const data = await response.json();
                 if (!data.valid) {
                     this.updateStatus('error: invalid password');

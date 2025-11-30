@@ -156,8 +156,17 @@
 
         // Check if room requires password
         fetch(`${window.API_BASE || ''}/api/room/${roomId}/exists`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    // Room doesn't exist or error
+                    window.location.href = '/';
+                    return;
+                }
+                return res.json();
+            })
             .then(data => {
+                if (!data) return; // Already redirected
+                
                 if (data.exists) {
                     if (data.password_protected) {
                         document.getElementById('passwordSection').style.display = 'flex';
@@ -168,12 +177,14 @@
                         webrtc.joinRoom();
                     }
                 } else {
-                    updateStatus('room not found');
+                    // Room doesn't exist - redirect to main
+                    window.location.href = '/';
                 }
             })
             .catch(err => {
                 console.error('Error checking room:', err);
-                updateStatus('error');
+                // On error, redirect to main
+                window.location.href = '/';
             });
     </script>
 </body>
