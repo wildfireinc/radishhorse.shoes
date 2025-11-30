@@ -197,8 +197,12 @@
             console.log('Create room form found, attaching handler');
         }
         
-        if (createRoomForm) {
-            createRoomForm.addEventListener('submit', async (e) => {
+        // Handle form submit
+        const handleCreateRoom = async (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -298,7 +302,15 @@
                     }
                     setTimeout(hideStatus, 5000);
                 }
-            });
+            };
+        
+        if (createRoomForm) {
+            createRoomForm.addEventListener('submit', handleCreateRoom);
+        }
+        
+        // Also handle button click directly
+        if (createRoomBtn) {
+            createRoomBtn.addEventListener('click', handleCreateRoom);
         }
 
 
