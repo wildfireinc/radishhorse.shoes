@@ -22,7 +22,7 @@
         <div class="gate-content">
             <h1 class="neon-logo">radishhorse.shoes</h1>
             <div class="turnstile-container">
-                <div class="cf-turnstile" data-sitekey="" data-callback="onTurnstileSuccess" id="turnstileWidget"></div>
+                <div class="cf-turnstile" data-sitekey="" data-callback="onTurnstileSuccess" data-error-callback="onTurnstileError" id="turnstileWidget"></div>
             </div>
         </div>
     </div>
@@ -72,12 +72,19 @@
 
         // Turnstile success callback
         window.onTurnstileSuccess = function(token) {
+            console.log('Turnstile verified, token received');
             turnstileToken = token;
             // Hide gate, show main content
             document.getElementById('turnstileGate').style.display = 'none';
             document.getElementById('mainContent').style.display = 'flex';
             // Initialize camera after gate passes
             initCamera();
+        };
+        
+        // Turnstile error callback
+        window.onTurnstileError = function() {
+            console.error('Turnstile verification failed');
+            alert('Verification failed. Please try again.');
         };
 
         async function initCamera() {
@@ -94,40 +101,58 @@
         }
 
         // Room creation
-        document.getElementById('createRoomForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const password = document.getElementById('roomPassword').value.trim();
-            
-            if (!turnstileToken) {
-                alert('Please complete verification');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${window.API_BASE || ''}/api/create-room`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        password: password,
-                        turnstile_token: turnstileToken
-                    })
-                });
-
-                const data = await response.json();
-                if (response.ok) {
-                    window.location.href = `/room/${data.room_id}`;
-                } else {
-                    alert('Failed to create room: ' + (data.error || 'Unknown error'));
-                    // Reset Turnstile
-                    if (window.turnstile) {
-                        window.turnstile.reset();
-                    }
+        const createRoomForm = document.getElementById('createRoomForm');
+        if (createRoomForm) {
+            createRoomForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('Create room form submitted');
+                
+                const password = document.getElementById('roomPassword').value.trim();
+                
+                if (!turnstileToken) {
+                    alert('Please complete verification first');
+                    console.error('No Turnstile token available');
+                    return;
                 }
-            } catch (err) {
-                console.error('Error creating room:', err);
-                alert('Failed to create room');
-            }
-        });
+
+                console.log('Sending create room request with token:', turnstileToken.substring(0, 20) + '...');
+
+                try {
+                    const apiUrl = `${window.API_BASE || ''}/api/create-room`;
+                    console.log('API URL:', apiUrl);
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            password: password,
+                            turnstile_token: turnstileToken
+                        })
+                    });
+
+                    console.log('Response status:', response.status);
+                    const data = await response.json();
+                    console.log('Response data:', data);
+
+                    if (response.ok) {
+                        window.location.href = `/room/${data.room_id}`;
+                    } else {
+                        alert('Failed to create room: ' + (data.error || 'Unknown error'));
+                        console.error('Create room failed:', data);
+                        // Reset Turnstile
+                        if (window.turnstile) {
+                            window.turnstile.reset();
+                            turnstileToken = null;
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error creating room:', err);
+                    alert('Failed to create room: ' + err.message);
+                }
+            });
+        } else {
+            console.error('Create room form not found!');
+        }
 
         // Set password button (on landing page - does nothing, pure chaos)
         document.getElementById('setPasswordBtn').addEventListener('click', () => {
