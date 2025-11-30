@@ -185,11 +185,17 @@ class WebRTCManager {
 
             // Handle remote stream
             this.peerConnection.ontrack = (event) => {
-                console.log('Received remote stream');
+                console.log('Received remote stream', event);
                 this.remoteStream = event.streams[0];
                 const remoteVideo = document.getElementById('remoteVideo');
                 if (remoteVideo) {
                     remoteVideo.srcObject = this.remoteStream;
+                    remoteVideo.play().catch(err => {
+                        console.error('Error playing remote video:', err);
+                    });
+                    console.log('Remote video stream set');
+                } else {
+                    console.error('Remote video element not found');
                 }
                 this.updateStatus('connected');
             };
@@ -212,6 +218,15 @@ class WebRTCManager {
                 switch (state) {
                     case 'connected':
                         this.updateStatus('connected');
+                        // Ensure remote video is playing
+                        setTimeout(() => {
+                            const remoteVideo = document.getElementById('remoteVideo');
+                            if (remoteVideo && remoteVideo.srcObject) {
+                                remoteVideo.play().catch(err => {
+                                    console.error('Error playing remote video on connect:', err);
+                                });
+                            }
+                        }, 500);
                         break;
                     case 'disconnected':
                         this.updateStatus('disconnected');
@@ -223,6 +238,11 @@ class WebRTCManager {
                         this.updateStatus('connection closed');
                         break;
                 }
+            };
+            
+            // Handle ICE connection state
+            this.peerConnection.oniceconnectionstatechange = () => {
+                console.log('ICE connection state:', this.peerConnection.iceConnectionState);
             };
 
             this.updateStatus('peer connection created');
