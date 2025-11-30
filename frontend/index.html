@@ -356,7 +356,7 @@
             }
         });
 
-        // Chaos button (go fuck yourself)
+        // Chaos button (go fuck yourself) - THE BLAST
         const chaosBtn = document.getElementById('chaosBtn');
         const chaosMessages = [
             'respect',
@@ -378,47 +378,96 @@
             'respect the chaos',
             'weird flex but ok',
             'noted',
-            'cool story bro'
+            'cool story bro',
+            'sigma move',
+            'gigachad energy',
+            'no cap',
+            'fr fr',
+            'on god',
+            'deadass',
+            'bet',
+            'say less',
+            'facts',
+            'big mood'
+        ];
+        
+        const memeLinks = [
+            'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du',
+            'https://youtu.be/dQw4w9WgXcQ',
+            'https://youtu.be/j5a0jTc9S10',
+            'https://youtu.be/9bZkp7q19f0',
+            'https://youtu.be/ZZ5LpwO-An4',
+            'https://youtu.be/kJQP7kiw5Fk',
+            'https://youtu.be/fJ9rUzIMcZQ',
+            'https://youtu.be/L_jWHffIx5E',
+            'https://youtu.be/6n3pFFPSlW4',
+            'https://youtu.be/9bZkp7q19f0',
+            'https://youtu.be/ZZ5LpwO-An4',
+            'https://youtu.be/kJQP7kiw5Fk',
+            'https://youtu.be/fJ9rUzIMcZQ',
+            'https://youtu.be/L_jWHffIx5E',
+            'https://youtu.be/6n3pFFPSlW4',
+            'https://youtu.be/dQw4w9WgXcQ',
+            'https://youtu.be/j5a0jTc9S10',
+            'https://youtu.be/9bZkp7q19f0',
+            'https://youtu.be/ZZ5LpwO-An4',
+            'https://youtu.be/kJQP7kiw5Fk'
         ];
         
         chaosBtn.addEventListener('click', () => {
             // Show random message
             const message = chaosMessages[Math.floor(Math.random() * chaosMessages.length)];
             showStatus(message);
-            setTimeout(hideStatus, 2000);
             
-            // Random chaotic effects
-            const effects = [
-                () => {
-                    document.body.style.filter = 'hue-rotate(180deg)';
-                    setTimeout(() => document.body.style.filter = '', 1000);
-                },
-                () => {
-                    document.body.style.transform = 'rotate(5deg)';
-                    setTimeout(() => document.body.style.transform = '', 500);
-                },
-                () => {
-                    const glitch = document.createElement('div');
-                    glitch.className = 'glitch-overlay';
-                    document.body.appendChild(glitch);
-                    setTimeout(() => glitch.remove(), 500);
-                },
-                () => {
-                    document.body.style.animation = 'shake 0.5s';
-                    setTimeout(() => document.body.style.animation = '', 500);
-                },
-                () => {
-                    document.body.style.filter = 'brightness(2) saturate(2)';
-                    setTimeout(() => document.body.style.filter = '', 800);
-                }
-            ];
+            // Pick random meme link
+            const randomLink = memeLinks[Math.floor(Math.random() * memeLinks.length)];
             
-            const randomEffect = effects[Math.floor(Math.random() * effects.length)];
-            randomEffect();
+            // MULTIPLE CHAOTIC EFFECTS AT ONCE
+            const effectCount = Math.floor(Math.random() * 3) + 2; // 2-4 effects
             
-            // Redirect to YouTube link after animation
+            // Effect 1: Glitch overlay
+            const glitch = document.createElement('div');
+            glitch.className = 'glitch-overlay';
+            document.body.appendChild(glitch);
+            
+            // Effect 2: Random rotation
+            const rotation = (Math.random() - 0.5) * 10;
+            document.body.style.transform = `rotate(${rotation}deg)`;
+            
+            // Effect 3: Color shift
+            const hue = Math.random() * 360;
+            document.body.style.filter = `hue-rotate(${hue}deg) brightness(${1 + Math.random()}) saturate(${1 + Math.random()})`;
+            
+            // Effect 4: Shake animation
+            document.body.style.animation = 'shake 0.5s';
+            
+            // Effect 5: Random scale
+            const scale = 0.95 + Math.random() * 0.1;
+            document.body.style.transform += ` scale(${scale})`;
+            
+            // Effect 6: Flash effect
+            const flash = document.createElement('div');
+            flash.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.5); z-index: 9999; pointer-events: none;';
+            document.body.appendChild(flash);
+            
+            // Chaos button itself goes wild
+            chaosBtn.style.transform = `rotate(${Math.random() * 360}deg) scale(1.2)`;
+            chaosBtn.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+            
+            // Clean up effects after delay
             setTimeout(() => {
-                window.location.href = 'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du';
+                glitch.remove();
+                flash.remove();
+                document.body.style.transform = '';
+                document.body.style.filter = '';
+                document.body.style.animation = '';
+                chaosBtn.style.transform = '';
+                chaosBtn.style.filter = '';
+            }, 1500);
+            
+            // Redirect to random meme link
+            setTimeout(() => {
+                window.location.href = randomLink;
             }, 1500);
         });
     </script>
