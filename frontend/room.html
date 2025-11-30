@@ -6,26 +6,16 @@
     <title>radishhorse.shoes - Room</title>
     <link rel="stylesheet" href="/styles.css">
     <script>
-        // Default backend (will be updated from API config)
-        window.BACKEND_URL = 'https://api.radishhorse.shoes';
         window.API_BASE = 'https://api.radishhorse.shoes';
         window.SOCKET_URL = 'https://api.radishhorse.shoes';
         
-        // Fetch backend configuration
-        (async function() {
-            try {
-                const response = await fetch('https://api.radishhorse.shoes/api/config');
-                if (response.ok) {
-                    const config = await response.json();
-                    if (config.apiUrl) window.API_BASE = config.apiUrl;
-                    if (config.socketUrl) window.SOCKET_URL = config.socketUrl;
-                    if (config.backendUrl) window.BACKEND_URL = config.backendUrl;
-                    console.log('Backend config loaded:', config);
-                }
-            } catch (err) {
-                console.warn('Failed to load backend config, using defaults:', err);
-            }
-        })();
+        fetch('https://api.radishhorse.shoes/api/config')
+            .then(r => r.ok ? r.json() : {})
+            .then(c => {
+                if (c.apiUrl) window.API_BASE = c.apiUrl;
+                if (c.socketUrl) window.SOCKET_URL = c.socketUrl;
+            })
+            .catch(() => {});
     </script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
@@ -35,9 +25,7 @@
             <h1 class="neon-logo small">radishhorse.shoes</h1>
         </div>
 
-        <div class="video-grid" id="videoGrid">
-            <!-- Remote videos will be added here dynamically when peers connect -->
-        </div>
+        <div class="video-grid" id="videoGrid"></div>
 
         <div class="chat-container">
             <div class="chat-messages" id="chatMessages"></div>
@@ -66,100 +54,65 @@
         </div>
 
         <div class="status" id="status">connecting...</div>
-
-        <div class="creator-credit">
-            creator: @thewildfireway
-        </div>
+        <div class="creator-credit">creator: @thewildfireway</div>
     </div>
 
     <script src="/webrtc.js"></script>
     <script>
-        // Get room ID from URL
-        const pathParts = window.location.pathname.split('/');
-        const roomId = pathParts[pathParts.length - 1];
+        const roomId = window.location.pathname.split('/').pop();
         let webrtc = null;
-        
-        // Set room URL
+
         document.getElementById('roomUrl').value = window.location.href;
 
-        // Copy room URL
         document.getElementById('copyBtn').addEventListener('click', () => {
-            const urlInput = document.getElementById('roomUrl');
-            urlInput.select();
+            document.getElementById('roomUrl').select();
             document.execCommand('copy');
             const btn = document.getElementById('copyBtn');
-            const originalText = btn.textContent;
             btn.textContent = 'copied!';
-            setTimeout(() => btn.textContent = originalText, 2000);
+            setTimeout(() => btn.textContent = 'copy', 2000);
         });
 
-
-        // Update status function
-        function updateStatus(status) {
-            document.getElementById('status').textContent = status;
+        function updateStatus(msg) {
+            document.getElementById('status').textContent = msg;
         }
 
-        // Chat functionality
-        const chatInput = document.getElementById('chatInput');
-        const sendChatBtn = document.getElementById('sendChatBtn');
-        
         function sendChatMessage() {
-            if (chatInput && chatInput.value.trim() && webrtc) {
-                webrtc.sendChatMessage(chatInput.value);
-                chatInput.value = '';
+            const input = document.getElementById('chatInput');
+            if (input.value.trim() && webrtc) {
+                webrtc.sendChatMessage(input.value);
+                input.value = '';
             }
         }
-        
-        if (sendChatBtn) {
-            sendChatBtn.addEventListener('click', sendChatMessage);
-        }
-        
-        if (chatInput) {
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    sendChatMessage();
-                }
-            });
-        }
 
-        // Join button (for password-protected rooms)
+        document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+
         document.getElementById('joinBtn').addEventListener('click', async () => {
             const password = document.getElementById('passwordInput').value;
             if (!webrtc) {
                 webrtc = new WebRTCManager(roomId);
-                webrtc.onStatusChange = (status) => {
-                    document.getElementById('status').textContent = status;
-                };
+                webrtc.onStatusChange = updateStatus;
             }
             await webrtc.joinRoom(password);
         });
 
-
-        // Roulette button
         document.getElementById('rouletteBtn').addEventListener('click', async () => {
             try {
-                const response = await fetch(`${window.API_BASE || ''}/api/roulette`);
-                const data = await response.json();
-                if (response.ok && data.room_id !== roomId) {
+                const res = await fetch(`${window.API_BASE}/api/roulette`);
+                const data = await res.json();
+                if (res.ok && data.room_id !== roomId) {
                     window.location.href = `/room/${data.room_id}`;
                 } else {
-                    alert('No other active rooms available');
+                    updateStatus('no other active rooms available');
                 }
             } catch (err) {
-                console.error('Error finding room:', err);
+                updateStatus('error finding room');
             }
         });
 
-        // Chaos button (go fuck yourself) - THE BLAST
-        const chaosBtn = document.getElementById('chaosBtn');
-        const chaosMessages = [
-            'respect',
-            'well ur a weird fella',
-            'knew this button will land',
-            'weird flex but ok',
-            'enjoyed it?'
-        ];
-        
+        const chaosMessages = ['respect', 'well ur a weird fella', 'knew this button will land', 'weird flex but ok', 'enjoyed it?'];
         const memeLinks = [
             'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du',
             'https://youtu.be/dQw4w9WgXcQ',
@@ -169,94 +122,62 @@
             'https://youtu.be/fJ9rUzIMcZQ',
             'https://youtu.be/L_jWHffIx5E'
         ];
-        
-        chaosBtn.addEventListener('click', () => {
-            // Disconnect if in room
-            if (webrtc) {
-                webrtc.disconnect();
-            }
+
+        document.getElementById('chaosBtn').addEventListener('click', () => {
+            if (webrtc) webrtc.disconnect();
             
-            // Randomize: message only, link only, or both
-            const displayMode = Math.random();
-            const randomLink = memeLinks[Math.floor(Math.random() * memeLinks.length)];
+            const mode = Math.random();
+            const link = memeLinks[Math.floor(Math.random() * memeLinks.length)];
+            const shortLink = link.replace('https://youtu.be/', '').split('?')[0];
             
-            if (displayMode < 0.4) {
-                // 40% - message only
-                const message = chaosMessages[Math.floor(Math.random() * chaosMessages.length)];
-                updateStatus(message);
-            } else if (displayMode < 0.7) {
-                // 30% - link only (show shortened)
-                const shortLink = randomLink.replace('https://youtu.be/', '');
-                updateStatus('youtu.be/' + shortLink.split('?')[0]);
+            if (mode < 0.4) {
+                updateStatus(chaosMessages[Math.floor(Math.random() * chaosMessages.length)]);
+            } else if (mode < 0.7) {
+                updateStatus('youtu.be/' + shortLink);
             } else {
-                // 30% - both message and link
-                const message = chaosMessages[Math.floor(Math.random() * chaosMessages.length)];
-                const shortLink = randomLink.replace('https://youtu.be/', '').split('?')[0];
-                updateStatus(message + ' • youtu.be/' + shortLink);
+                updateStatus(chaosMessages[Math.floor(Math.random() * chaosMessages.length)] + ' • youtu.be/' + shortLink);
             }
-            
-            // Pick random meme link
-            const randomLink = memeLinks[Math.floor(Math.random() * memeLinks.length)];
-            
-            // MULTIPLE CHAOTIC EFFECTS AT ONCE
-            // Effect 1: Glitch overlay
+
             const glitch = document.createElement('div');
             glitch.className = 'glitch-overlay';
             document.body.appendChild(glitch);
-            
-            // Effect 2: Random rotation
+
             const rotation = (Math.random() - 0.5) * 10;
-            document.body.style.transform = `rotate(${rotation}deg)`;
-            
-            // Effect 3: Color shift
             const hue = Math.random() * 360;
+            document.body.style.transform = `rotate(${rotation}deg) scale(${0.95 + Math.random() * 0.1})`;
             document.body.style.filter = `hue-rotate(${hue}deg) brightness(${1 + Math.random()}) saturate(${1 + Math.random()})`;
-            
-            // Effect 4: Shake animation
             document.body.style.animation = 'shake 0.5s';
-            
-            // Effect 5: Random scale
-            const scale = 0.95 + Math.random() * 0.1;
-            document.body.style.transform += ` scale(${scale})`;
-            
-            // Effect 6: Flash effect
+
             const flash = document.createElement('div');
             flash.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.5); z-index: 9999; pointer-events: none;';
             document.body.appendChild(flash);
-            
-            // Chaos button itself goes wild
-            chaosBtn.style.transform = `rotate(${Math.random() * 360}deg) scale(1.2)`;
-            chaosBtn.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
-            
-            // Clean up effects after delay
+
+            const btn = document.getElementById('chaosBtn');
+            btn.style.transform = `rotate(${Math.random() * 360}deg) scale(1.2)`;
+            btn.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+
             setTimeout(() => {
                 glitch.remove();
                 flash.remove();
                 document.body.style.transform = '';
                 document.body.style.filter = '';
                 document.body.style.animation = '';
-                chaosBtn.style.transform = '';
-                chaosBtn.style.filter = '';
-            }, 1500);
-            
-            // Open random meme link in new tab (always opens, regardless of display)
-            setTimeout(() => {
-                window.open(randomLink, '_blank');
+                btn.style.transform = '';
+                btn.style.filter = '';
+                window.open(link, '_blank');
             }, 1500);
         });
 
-        // Check if room requires password
-        fetch(`${window.API_BASE || ''}/api/room/${roomId}/exists`)
+        fetch(`${window.API_BASE}/api/room/${roomId}/exists`)
             .then(res => {
                 if (!res.ok) {
-                    // Room doesn't exist or error
                     window.location.href = '/';
-                    return;
+                    return null;
                 }
                 return res.json();
             })
             .then(data => {
-                if (!data) return; // Already redirected
+                if (!data) return;
                 
                 if (data.exists) {
                     if (data.password_protected) {
@@ -268,16 +189,10 @@
                         webrtc.joinRoom();
                     }
                 } else {
-                    // Room doesn't exist - redirect to main
                     window.location.href = '/';
                 }
             })
-            .catch(err => {
-                console.error('Error checking room:', err);
-                // On error, redirect to main
-                window.location.href = '/';
-            });
+            .catch(() => window.location.href = '/');
     </script>
 </body>
 </html>
-

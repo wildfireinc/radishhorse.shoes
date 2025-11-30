@@ -3,12 +3,9 @@ class WebRTCManager {
         this.roomId = roomId;
         this.socket = null;
         this.localStream = null;
-        this.remoteStream = null;
         this.peerConnection = null;
         this.turnConfig = null;
         this.onStatusChange = null;
-        this.isInitiator = false;
-        
         this.init();
     }
 
@@ -20,56 +17,31 @@ class WebRTCManager {
 
     async getTurnConfig() {
         try {
-            const response = await fetch(`${window.API_BASE || ''}/api/turn-config`);
-            const data = await response.json();
-            this.turnConfig = data.urls.length > 0 ? {
+            const res = await fetch(`${window.API_BASE || ''}/api/turn-config`);
+            const data = await res.json();
+            this.turnConfig = data.urls?.length > 0 ? {
                 iceServers: [
-                    {
-                        urls: data.urls,
-                        username: data.username,
-                        credential: data.credential
-                    },
-                    {
-                        urls: ['stun:stun.l.google.com:19302']
-                    }
+                    { urls: data.urls, username: data.username, credential: data.credential },
+                    { urls: ['stun:stun.l.google.com:19302'] }
                 ]
             } : {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' }
-                ]
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
             };
         } catch (err) {
-            console.error('Error getting TURN config:', err);
-            this.turnConfig = {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' }
-                ]
-            };
+            this.turnConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
         }
     }
 
     async initLocalStream() {
-        // Reuse existing stream if available (for room page)
-        if (this.localStream) {
-            return;
-        }
-        
+        if (this.localStream) return;
         try {
-            this.localStream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-                audio: true
-            });
-            
-            // Only set local video on index page, not room page
+            this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             const localVideo = document.getElementById('localVideo');
             if (localVideo && (window.location.pathname === '/' || window.location.pathname === '')) {
                 localVideo.srcObject = this.localStream;
-                localVideo.play().catch(err => {
-                    console.error('Error playing local video:', err);
-                });
+                localVideo.play().catch(() => {});
             }
         } catch (err) {
-            console.error('Error accessing media devices:', err);
             this.updateStatus('error: camera access denied');
         }
     }
@@ -77,83 +49,48 @@ class WebRTCManager {
     initSocket() {
         const socketUrl = window.SOCKET_URL || window.API_BASE || '';
         this.socket = socketUrl ? io(socketUrl) : io();
-        
-        this.socket.on('connect', () => {
-            console.log('Socket connected');
-        });
 
-        this.socket.on('connected', () => {
-            console.log('Server connected');
-        });
-
-        this.socket.on('joined', (data) => {
-            console.log('Joined room:', data.room_id);
+        this.socket.on('connect', () => {});
+        this.socket.on('joined', () => {
             this.updateStatus('waiting for peer...');
             this.waitForPeer();
         });
-
         this.socket.on('error', (data) => {
-            console.error('Socket error:', data.message);
-            const errorMsg = data.message || '';
-            if (errorMsg.includes('not found') || errorMsg.includes('Room not found') || errorMsg.includes('Invalid')) {
-                // Room doesn't exist - redirect to main
+            const msg = data.message || '';
+            if (msg.includes('not found') || msg.includes('Room not found') || msg.includes('Invalid')) {
                 window.location.href = '/';
             } else {
-                this.updateStatus('error: ' + errorMsg);
+                this.updateStatus('error: ' + msg);
             }
         });
-
-        this.socket.on('user_joined', async (data) => {
-            console.log('User joined:', data.sid);
+        this.socket.on('user_joined', async () => {
             if (!this.peerConnection) {
-                this.isInitiator = true;
                 await this.createPeerConnection();
                 await this.createOffer();
             }
         });
-
         this.socket.on('offer', async (data) => {
-            console.log('Received offer');
-            if (!this.peerConnection) {
-                await this.createPeerConnection();
-            }
+            if (!this.peerConnection) await this.createPeerConnection();
             await this.handleOffer(data.offer);
         });
-
         this.socket.on('answer', async (data) => {
-            console.log('Received answer');
             await this.handleAnswer(data.answer);
         });
-
         this.socket.on('ice-candidate', async (data) => {
-            console.log('Received ICE candidate');
             await this.handleIceCandidate(data.candidate);
         });
-
-        this.socket.on('user_left', (data) => {
-            console.log('User left:', data.sid);
+        this.socket.on('user_left', () => {
             this.updateStatus('peer disconnected');
             this.cleanup();
         });
-
-        this.socket.on('disconnect', () => {
-            console.log('Socket disconnected');
-            this.updateStatus('disconnected');
-        });
-
-        // Chat messages
         this.socket.on('chat_message', (data) => {
             this.handleChatMessage(data.message, data.sid !== this.socket.id);
         });
     }
 
     sendChatMessage(message) {
-        if (this.socket && this.socket.connected && message.trim()) {
-            this.socket.emit('chat_message', {
-                room_id: this.roomId,
-                message: message.trim()
-            });
-            // Show own message immediately
+        if (this.socket?.connected && message.trim()) {
+            this.socket.emit('chat_message', { room_id: this.roomId, message: message.trim() });
             this.handleChatMessage(message.trim(), false);
         }
     }
@@ -162,67 +99,53 @@ class WebRTCManager {
         const chatMessages = document.getElementById('chatMessages');
         if (!chatMessages) return;
 
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'chat-message' + (isFromOther ? '' : ' own');
-        messageDiv.textContent = message;
-        chatMessages.appendChild(messageDiv);
-        
-        // Auto-scroll to bottom
+        const div = document.createElement('div');
+        div.className = 'chat-message' + (isFromOther ? '' : ' own');
+        div.textContent = message;
+        chatMessages.appendChild(div);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // Limit messages (keep last 50)
+
         while (chatMessages.children.length > 50) {
             chatMessages.removeChild(chatMessages.firstChild);
         }
     }
 
     async joinRoom(password = '') {
-        if (!this.socket || !this.socket.connected) {
+        if (!this.socket?.connected) {
             this.updateStatus('connecting...');
             return;
         }
 
-        // Verify password if needed
         if (password) {
             try {
-                const response = await fetch(`${window.API_BASE || ''}/api/room/${this.roomId}/password`, {
+                const res = await fetch(`${window.API_BASE || ''}/api/room/${this.roomId}/password`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'verify',
-                        password: password
-                    })
+                    body: JSON.stringify({ action: 'verify', password })
                 });
                 
-                if (!response.ok) {
-                    // Room might not exist
+                if (!res.ok) {
                     window.location.href = '/';
                     return;
                 }
                 
-                const data = await response.json();
+                const data = await res.json();
                 if (!data.valid) {
                     this.updateStatus('error: invalid password');
                     return;
                 }
             } catch (err) {
-                console.error('Error verifying password:', err);
                 this.updateStatus('error: password verification failed');
                 return;
             }
         }
 
-        this.socket.emit('join', {
-            room_id: this.roomId,
-            password: password
-        });
+        this.socket.emit('join', { room_id: this.roomId, password });
     }
 
     waitForPeer() {
-        // Check if there are other users in the room
         setTimeout(() => {
             if (!this.peerConnection) {
-                // No peer yet, we'll wait for them to join
                 this.updateStatus('waiting for peer...');
             }
         }, 1000);
@@ -232,82 +155,54 @@ class WebRTCManager {
         try {
             this.peerConnection = new RTCPeerConnection(this.turnConfig);
 
-            // Add local stream tracks
             if (this.localStream) {
                 this.localStream.getTracks().forEach(track => {
                     this.peerConnection.addTrack(track, this.localStream);
                 });
             }
 
-            // Handle remote stream
             this.peerConnection.ontrack = (event) => {
-                console.log('Received remote stream', event);
-                this.remoteStream = event.streams[0];
-                
-                // Create video element dynamically
+                const stream = event.streams[0];
                 const videoGrid = document.getElementById('videoGrid');
                 if (videoGrid) {
-                    // Remove existing remote videos
-                    const existingRemote = videoGrid.querySelector('.remote-video-wrapper');
-                    if (existingRemote) {
-                        existingRemote.remove();
-                    }
+                    const existing = videoGrid.querySelector('.remote-video-wrapper');
+                    if (existing) existing.remove();
                     
-                    // Create new video wrapper
-                    const videoWrapper = document.createElement('div');
-                    videoWrapper.className = 'video-wrapper remote-video-wrapper';
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'video-wrapper remote-video-wrapper';
                     
                     const video = document.createElement('video');
-                    video.id = 'remoteVideo';
                     video.autoplay = true;
                     video.playsInline = true;
-                    video.muted = false;
-                    video.srcObject = this.remoteStream;
+                    video.srcObject = stream;
                     
                     const label = document.createElement('div');
                     label.className = 'video-label';
                     label.textContent = 'them';
                     
-                    videoWrapper.appendChild(video);
-                    videoWrapper.appendChild(label);
-                    videoGrid.appendChild(videoWrapper);
+                    wrapper.appendChild(video);
+                    wrapper.appendChild(label);
+                    videoGrid.appendChild(wrapper);
                     
-                    video.play().catch(err => {
-                        console.error('Error playing remote video:', err);
-                    });
-                    console.log('Remote video stream set');
-                } else {
-                    console.error('Video grid element not found');
+                    video.play().catch(() => {});
                 }
                 this.updateStatus('connected');
             };
 
-            // Handle ICE candidates
             this.peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
-                    this.socket.emit('ice-candidate', {
-                        room_id: this.roomId,
-                        candidate: event.candidate
-                    });
+                    this.socket.emit('ice-candidate', { room_id: this.roomId, candidate: event.candidate });
                 }
             };
 
-            // Handle connection state changes
             this.peerConnection.onconnectionstatechange = () => {
                 const state = this.peerConnection.connectionState;
-                console.log('Connection state:', state);
-                
                 switch (state) {
                     case 'connected':
                         this.updateStatus('connected');
-                        // Ensure remote video is playing
                         setTimeout(() => {
-                            const remoteVideo = document.getElementById('remoteVideo');
-                            if (remoteVideo && remoteVideo.srcObject) {
-                                remoteVideo.play().catch(err => {
-                                    console.error('Error playing remote video on connect:', err);
-                                });
-                            }
+                            const video = document.getElementById('videoGrid')?.querySelector('video');
+                            if (video?.srcObject) video.play().catch(() => {});
                         }, 500);
                         break;
                     case 'disconnected':
@@ -316,20 +211,11 @@ class WebRTCManager {
                     case 'failed':
                         this.updateStatus('connection failed');
                         break;
-                    case 'closed':
-                        this.updateStatus('connection closed');
-                        break;
                 }
-            };
-            
-            // Handle ICE connection state
-            this.peerConnection.oniceconnectionstatechange = () => {
-                console.log('ICE connection state:', this.peerConnection.iceConnectionState);
             };
 
             this.updateStatus('peer connection created');
         } catch (err) {
-            console.error('Error creating peer connection:', err);
             this.updateStatus('error: failed to create connection');
         }
     }
@@ -338,15 +224,9 @@ class WebRTCManager {
         try {
             const offer = await this.peerConnection.createOffer();
             await this.peerConnection.setLocalDescription(offer);
-            
-            this.socket.emit('offer', {
-                room_id: this.roomId,
-                offer: offer
-            });
-            
+            this.socket.emit('offer', { room_id: this.roomId, offer });
             this.updateStatus('offer sent');
         } catch (err) {
-            console.error('Error creating offer:', err);
             this.updateStatus('error: failed to create offer');
         }
     }
@@ -356,15 +236,9 @@ class WebRTCManager {
             await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
             const answer = await this.peerConnection.createAnswer();
             await this.peerConnection.setLocalDescription(answer);
-            
-            this.socket.emit('answer', {
-                room_id: this.roomId,
-                answer: answer
-            });
-            
+            this.socket.emit('answer', { room_id: this.roomId, answer });
             this.updateStatus('answer sent');
         } catch (err) {
-            console.error('Error handling offer:', err);
             this.updateStatus('error: failed to handle offer');
         }
     }
@@ -374,7 +248,6 @@ class WebRTCManager {
             await this.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
             this.updateStatus('answer received');
         } catch (err) {
-            console.error('Error handling answer:', err);
             this.updateStatus('error: failed to handle answer');
         }
     }
@@ -382,15 +255,11 @@ class WebRTCManager {
     async handleIceCandidate(candidate) {
         try {
             await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (err) {
-            console.error('Error handling ICE candidate:', err);
-        }
+        } catch (err) {}
     }
 
     updateStatus(status) {
-        if (this.onStatusChange) {
-            this.onStatusChange(status);
-        }
+        if (this.onStatusChange) this.onStatusChange(status);
     }
 
     cleanup() {
@@ -399,20 +268,17 @@ class WebRTCManager {
             this.peerConnection = null;
         }
         
-        // Remove remote video wrapper
         const videoGrid = document.getElementById('videoGrid');
         if (videoGrid) {
-            const remoteWrapper = videoGrid.querySelector('.remote-video-wrapper');
-            if (remoteWrapper) {
-                const video = remoteWrapper.querySelector('video');
-                if (video && video.srcObject) {
+            const wrapper = videoGrid.querySelector('.remote-video-wrapper');
+            if (wrapper) {
+                const video = wrapper.querySelector('video');
+                if (video?.srcObject) {
                     video.srcObject.getTracks().forEach(track => track.stop());
                 }
-                remoteWrapper.remove();
+                wrapper.remove();
             }
         }
-        
-        this.remoteStream = null;
     }
 
     disconnect() {
@@ -428,4 +294,3 @@ class WebRTCManager {
         this.cleanup();
     }
 }
-
