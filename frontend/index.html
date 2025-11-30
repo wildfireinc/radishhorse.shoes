@@ -99,6 +99,7 @@
         <div class="video-preview-container">
             <video id="localVideo" autoplay muted playsinline></video>
             <div id="cameraStatus" class="status" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 0.5rem 1rem; border-radius: 4px; display: none;"></div>
+            <button id="startCameraBtn" class="neon-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">start camera</button>
         </div>
 
         <div class="controls">
@@ -254,13 +255,47 @@
         }
         
         // Fallback: if Turnstile already passed but camera didn't initialize
-        if (window.turnstilePassed && !localStream) {
-            setTimeout(() => {
+        // Show manual start button for mobile browsers that require user gesture
+        const startCameraBtn = document.getElementById('startCameraBtn');
+        if (startCameraBtn) {
+            startCameraBtn.addEventListener('click', function() {
+                this.style.display = 'none';
                 initCamera().catch(err => {
                     showCameraStatus('error: camera initialization failed', true);
                 });
+            });
+        }
+        
+        // Auto-try camera init, but show button if it fails (mobile gesture requirement)
+        if (window.turnstilePassed && !localStream) {
+            setTimeout(() => {
+                initCamera().catch(err => {
+                    // On mobile, getUserMedia might need user gesture
+                    if (startCameraBtn) {
+                        startCameraBtn.style.display = 'block';
+                        showCameraStatus('tap button to start camera', false);
+                    }
+                });
             }, 500);
         }
+        
+        // Also show button if camera init fails in the callback
+        const originalInitCamera = initCamera;
+        initCamera = async function() {
+            try {
+                await originalInitCamera();
+                if (startCameraBtn) startCameraBtn.style.display = 'none';
+            } catch (err) {
+                // If it fails and might be a gesture issue, show button
+                if (err.name === 'NotAllowedError' || err.name === 'NotFoundError') {
+                    if (startCameraBtn) {
+                        startCameraBtn.style.display = 'block';
+                        showCameraStatus('tap button to start camera', false);
+                    }
+                }
+                throw err;
+            }
+        };
 
         // Room creation
         const createRoomForm = document.getElementById('createRoomForm');
