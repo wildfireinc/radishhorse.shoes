@@ -114,7 +114,7 @@ class WebRTCManager {
     async joinRoom(password = '') {
         if (!this.socket?.connected) {
             this.updateStatus('connecting...');
-            return;
+            return Promise.resolve();
         }
 
         if (password) {
@@ -127,21 +127,22 @@ class WebRTCManager {
                 
                 if (!res.ok) {
                     window.location.href = '/';
-                    return;
+                    return Promise.reject('Room not found');
                 }
                 
                 const data = await res.json();
                 if (!data.valid) {
                     this.updateStatus('error: invalid password');
-                    return;
+                    return Promise.reject('Invalid password');
                 }
             } catch (err) {
                 this.updateStatus('error: password verification failed');
-                return;
+                return Promise.reject(err);
             }
         }
 
         this.socket.emit('join', { room_id: this.roomId, password });
+        return Promise.resolve();
     }
 
     waitForPeer() {

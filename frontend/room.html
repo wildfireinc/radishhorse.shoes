@@ -27,8 +27,14 @@
 
         <div class="video-grid" id="videoGrid"></div>
 
-        <!-- Creator View: Link + Copy + Chat -->
-        <div id="creatorView" style="display: none;">
+        <!-- Password field (shown only for guests if password protected) -->
+        <div class="password-section" id="passwordSection" style="display: none;">
+            <input type="password" id="passwordInput" placeholder="enter password" class="neon-input">
+            <button id="joinBtn" class="neon-button small">join</button>
+        </div>
+
+        <!-- Room link + copy + chat (shown after joining) -->
+        <div id="roomContent" style="display: none;">
             <div class="room-info">
                 <div class="room-url">
                     <span>room:</span>
@@ -46,30 +52,6 @@
             </div>
         </div>
 
-        <!-- Guest View: Password (if needed) + Link + Copy + Chat -->
-        <div id="guestView" style="display: none;">
-            <div class="password-section" id="passwordSection" style="display: none;">
-                <input type="password" id="passwordInput" placeholder="enter password" class="neon-input">
-                <button id="joinBtn" class="neon-button small">join</button>
-            </div>
-
-            <div class="room-info" id="guestRoomInfo" style="display: none;">
-                <div class="room-url">
-                    <span>room:</span>
-                    <input type="text" id="guestRoomUrl" readonly class="neon-input">
-                    <button id="guestCopyBtn" class="neon-button small">copy</button>
-                </div>
-            </div>
-
-            <div class="chat-container" id="guestChatContainer" style="display: none;">
-                <div class="chat-messages" id="guestChatMessages"></div>
-                <div class="chat-input-container">
-                    <input type="text" id="guestChatInput" placeholder="type something..." class="neon-input" maxlength="200">
-                    <button id="guestSendChatBtn" class="neon-button small">send</button>
-                </div>
-            </div>
-        </div>
-
         <div class="controls">
             <button id="rouletteBtn" class="neon-button">meet a stranger</button>
             <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
@@ -83,7 +65,6 @@
     <script>
         const roomId = window.location.pathname.split('/').filter(p => p && p !== 'room.html').pop();
         let webrtc = null;
-        let isCreator = false;
 
         if (!roomId) {
             window.location.href = '/';
@@ -93,11 +74,8 @@
             document.getElementById('status').textContent = msg;
         }
 
-        function showCreatorView() {
-            isCreator = true;
-            document.getElementById('creatorView').style.display = 'block';
-            document.getElementById('guestView').style.display = 'none';
-            
+        function showRoomContent() {
+            document.getElementById('roomContent').style.display = 'block';
             document.getElementById('roomUrl').value = window.location.href;
             
             document.getElementById('copyBtn').addEventListener('click', () => {
@@ -108,18 +86,8 @@
                 setTimeout(() => btn.textContent = 'copy', 2000);
             });
 
-            setupChat('chatMessages', 'chatInput', 'sendChatBtn');
-        }
-
-        function showGuestView() {
-            isCreator = false;
-            document.getElementById('creatorView').style.display = 'none';
-            document.getElementById('guestView').style.display = 'block';
-        }
-
-        function setupChat(messagesId, inputId, sendBtnId) {
-            const chatInput = document.getElementById(inputId);
-            const sendChatBtn = document.getElementById(sendBtnId);
+            const chatInput = document.getElementById('chatInput');
+            const sendChatBtn = document.getElementById('sendChatBtn');
             
             function sendChatMessage() {
                 if (chatInput.value.trim() && webrtc) {
@@ -134,51 +102,19 @@
             });
         }
 
-        function showGuestPasswordForm() {
-            document.getElementById('passwordSection').style.display = 'flex';
-            document.getElementById('joinBtn').addEventListener('click', async () => {
-                const password = document.getElementById('passwordInput').value;
-                if (!webrtc) {
-                    webrtc = new WebRTCManager(roomId);
-                    webrtc.onStatusChange = updateStatus;
-                }
-                await webrtc.joinRoom(password);
-                
-                // After joining, show link and chat
-                document.getElementById('passwordSection').style.display = 'none';
-                document.getElementById('guestRoomInfo').style.display = 'block';
-                document.getElementById('guestChatContainer').style.display = 'flex';
-                
-                document.getElementById('guestRoomUrl').value = window.location.href;
-                
-                document.getElementById('guestCopyBtn').addEventListener('click', () => {
-                    document.getElementById('guestRoomUrl').select();
-                    document.execCommand('copy');
-                    const btn = document.getElementById('guestCopyBtn');
-                    btn.textContent = 'copied!';
-                    setTimeout(() => btn.textContent = 'copy', 2000);
-                });
-
-                setupChat('guestChatMessages', 'guestChatInput', 'guestSendChatBtn');
+        function joinRoom(password = '') {
+            webrtc = new WebRTCManager(roomId);
+            webrtc.onStatusChange = updateStatus;
+            webrtc.joinRoom(password).then(() => {
+                showRoomContent();
             });
         }
 
-        function showGuestRoomInfo() {
-            document.getElementById('guestRoomInfo').style.display = 'block';
-            document.getElementById('guestChatContainer').style.display = 'flex';
-            
-            document.getElementById('guestRoomUrl').value = window.location.href;
-            
-            document.getElementById('guestCopyBtn').addEventListener('click', () => {
-                document.getElementById('guestRoomUrl').select();
-                document.execCommand('copy');
-                const btn = document.getElementById('guestCopyBtn');
-                btn.textContent = 'copied!';
-                setTimeout(() => btn.textContent = 'copy', 2000);
-            });
-
-            setupChat('guestChatMessages', 'guestChatInput', 'guestSendChatBtn');
-        }
+        document.getElementById('joinBtn').addEventListener('click', () => {
+            const password = document.getElementById('passwordInput').value;
+            document.getElementById('passwordSection').style.display = 'none';
+            joinRoom(password);
+        });
 
         document.getElementById('rouletteBtn').addEventListener('click', async () => {
             try {
@@ -250,19 +186,14 @@
             }, 1500);
         });
 
-        // Check if user is creator (stored in sessionStorage when creating room)
+        // Check if creator or guest
         const creatorToken = sessionStorage.getItem(`creator_${roomId}`);
         
         if (creatorToken) {
-            // User is creator
-            showCreatorView();
-            webrtc = new WebRTCManager(roomId);
-            webrtc.onStatusChange = updateStatus;
-            webrtc.joinRoom();
+            // Creator: join immediately, show content
+            joinRoom();
         } else {
-            // User is guest - check room and show password if needed
-            showGuestView();
-            
+            // Guest: check if password needed
             fetch(`${window.API_BASE}/api/room/${roomId}/exists`)
                 .then(res => {
                     if (!res.ok) {
@@ -276,15 +207,11 @@
                     
                     if (data.exists) {
                         if (data.password_protected) {
-                            showGuestPasswordForm();
+                            document.getElementById('passwordSection').style.display = 'flex';
                             updateStatus('password required');
                         } else {
-                            // No password, join directly
-                            webrtc = new WebRTCManager(roomId);
-                            webrtc.onStatusChange = updateStatus;
-                            webrtc.joinRoom().then(() => {
-                                showGuestRoomInfo();
-                            });
+                            // No password, join immediately
+                            joinRoom();
                         }
                     } else {
                         window.location.href = '/';
