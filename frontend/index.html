@@ -61,12 +61,10 @@
                 <div id="createRoomStatus" class="status" style="display: none;"></div>
                 <button type="submit" id="createRoomBtn" class="neon-button">create room</button>
             </form>
-            <button id="chatOnlyToggle" class="neon-button" style="margin-top: 1rem; width: 100%; max-width: 400px;">
-                <label style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; width: 100%;">
-                    <input type="checkbox" id="chatOnlyCheckbox" style="width: 18px; height: 18px; cursor: pointer;">
-                    <span>chat only</span>
-                </label>
-            </button>
+            <label id="chatOnlyToggle" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; margin-top: 1rem; width: 100%; max-width: 400px; color: #00ffff; text-shadow: 0 0 5px #00ffff; font-family: 'Rajdhani', sans-serif; text-transform: lowercase;">
+                <input type="checkbox" id="chatOnlyCheckbox" style="width: 18px; height: 18px; cursor: pointer;">
+                <span>chat only</span>
+            </label>
         </div>
             <div id="roomLinkSection" style="display: none; margin-top: 1rem;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 600px; width: 100%; margin: 0 auto;">
@@ -117,15 +115,20 @@
         }
 
         // Chat only toggle handler
-        document.getElementById('chatOnlyCheckbox').addEventListener('change', (e) => {
+        const chatOnlyCheckbox = document.getElementById('chatOnlyCheckbox');
+        const chatOnlyToggle = document.getElementById('chatOnlyToggle');
+        
+        chatOnlyCheckbox.addEventListener('change', (e) => {
             chatOnlyMode = e.target.checked;
             updateCameraVisibility();
         });
         
-        // Prevent toggle button from submitting form
-        document.getElementById('chatOnlyToggle').addEventListener('click', (e) => {
+        chatOnlyToggle.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            chatOnlyCheckbox.checked = !chatOnlyCheckbox.checked;
+            chatOnlyMode = chatOnlyCheckbox.checked;
+            updateCameraVisibility();
         });
 
         function showStatus(msg) {
