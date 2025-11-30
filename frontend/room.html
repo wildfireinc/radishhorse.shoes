@@ -106,7 +106,6 @@
             webrtc = new WebRTCManager(roomId, chatOnly);
             webrtc.onStatusChange = updateStatus;
             
-            // Wait for socket to connect before joining
             setTimeout(() => {
                 webrtc.joinRoom(password).then(() => {
                     showRoomContent();
@@ -122,14 +121,11 @@
             joinRoom(password);
         });
 
-        // Check if creator or guest
         const creatorToken = sessionStorage.getItem(`creator_${roomId}`);
         
         if (creatorToken) {
-            // Creator: join immediately
             joinRoom();
         } else {
-            // Guest: check if password needed
             fetch(`${window.API_BASE}/api/room/${roomId}/exists`)
                 .then(res => {
                     if (!res.ok) {
