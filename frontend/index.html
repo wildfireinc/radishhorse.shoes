@@ -139,6 +139,10 @@
                 createRoomStatus.textContent = msg;
                 createRoomStatus.style.display = 'block';
             }
+            // Also alert on mobile for visibility
+            if (window.innerWidth < 768) {
+                alert(msg);
+            }
         }
         
         function hideStatus() {
@@ -147,23 +151,36 @@
             }
         }
         
+        if (!createRoomForm) {
+            showStatus('error: form not found');
+        }
+        
         if (createRoomForm) {
             createRoomForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 
-                const password = document.getElementById('roomPassword').value.trim();
+                showStatus('clicked...');
+                
+                const password = document.getElementById('roomPassword')?.value.trim() || '';
                 
                 if (!turnstileToken) {
                     showStatus('error: please complete verification first');
-                    setTimeout(hideStatus, 3000);
+                    setTimeout(() => {
+                        hideStatus();
+                    }, 3000);
                     return;
                 }
 
                 showStatus('creating room...');
-                if (createRoomBtn) createRoomBtn.disabled = true;
+                if (createRoomBtn) {
+                    createRoomBtn.disabled = true;
+                    createRoomBtn.textContent = 'creating...';
+                }
 
                 try {
                     const apiUrl = `${window.API_BASE || 'https://api.radishhorse.shoes'}/api/create-room`;
+                    showStatus('calling ' + apiUrl);
                     
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -174,24 +191,34 @@
                         })
                     });
 
+                    showStatus('got response: ' + response.status);
+
                     let data;
                     try {
                         const text = await response.text();
                         data = text ? JSON.parse(text) : {};
                     } catch (parseErr) {
-                        showStatus('error: invalid server response');
-                        if (createRoomBtn) createRoomBtn.disabled = false;
-                        setTimeout(hideStatus, 3000);
+                        showStatus('error: invalid server response - ' + parseErr.message);
+                        if (createRoomBtn) {
+                            createRoomBtn.disabled = false;
+                            createRoomBtn.textContent = 'create room';
+                        }
+                        setTimeout(hideStatus, 5000);
                         return;
                     }
 
                     if (response.ok && data.room_id) {
-                        showStatus('redirecting...');
-                        window.location.href = `/room/${data.room_id}`;
+                        showStatus('success! redirecting...');
+                        setTimeout(() => {
+                            window.location.href = `/room/${data.room_id}`;
+                        }, 500);
                     } else {
                         const errorMsg = data.error || data.message || `HTTP ${response.status}`;
                         showStatus('error: ' + errorMsg);
-                        if (createRoomBtn) createRoomBtn.disabled = false;
+                        if (createRoomBtn) {
+                            createRoomBtn.disabled = false;
+                            createRoomBtn.textContent = 'create room';
+                        }
                         setTimeout(hideStatus, 5000);
                         // Reset Turnstile
                         if (window.turnstile) {
@@ -201,7 +228,10 @@
                     }
                 } catch (err) {
                     showStatus('error: ' + err.message);
-                    if (createRoomBtn) createRoomBtn.disabled = false;
+                    if (createRoomBtn) {
+                        createRoomBtn.disabled = false;
+                        createRoomBtn.textContent = 'create room';
+                    }
                     setTimeout(hideStatus, 5000);
                 }
             });
