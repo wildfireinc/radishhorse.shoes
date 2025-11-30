@@ -46,6 +46,12 @@ body::before {
     text-align: center;
 }
 
+.neon-logo-link {
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+}
+
 .neon-logo {
     font-family: 'Orbitron', sans-serif;
     font-size: 5rem;
