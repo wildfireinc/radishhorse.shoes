@@ -150,10 +150,22 @@
                     });
 
                     console.log('Response status:', response.status);
-                    const data = await response.json();
+                    
+                    let data;
+                    try {
+                        const text = await response.text();
+                        console.log('Response text:', text);
+                        data = text ? JSON.parse(text) : {};
+                    } catch (parseErr) {
+                        console.error('Failed to parse response:', parseErr);
+                        alert('Failed to parse server response');
+                        return;
+                    }
+                    
                     console.log('Response data:', data);
 
-                    if (response.ok) {
+                    if (response.ok && data.room_id) {
+                        console.log('Redirecting to room:', data.room_id);
                         window.location.href = `/room/${data.room_id}`;
                     } else {
                         const errorMsg = data.error || data.message || `HTTP ${response.status}: ${response.statusText}`;
