@@ -121,21 +121,27 @@ class WebRTCManager {
             return Promise.reject('Socket not initialized');
         }
         
+        // Wait for socket connection
         if (!this.socket.connected) {
-            this.updateStatus('waiting for connection...');
-            return new Promise((resolve, reject) => {
+            this.updateStatus('connecting...');
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject('Connection timeout');
+                }, 10000);
+                
                 this.socket.once('connect', () => {
-                    this.joinRoom(password).then(resolve).catch(reject);
+                    clearTimeout(timeout);
+                    resolve();
                 });
-                setTimeout(() => {
-                    if (!this.socket.connected) {
-                        this.updateStatus('error: connection timeout');
-                        reject('Connection timeout');
-                    }
-                }, 5000);
+                
+                this.socket.once('connect_error', (err) => {
+                    clearTimeout(timeout);
+                    reject(err);
+                });
             });
         }
 
+        // Verify password if provided
         if (password) {
             try {
                 const res = await fetch(`${window.API_BASE || ''}/api/room/${this.roomId}/password`, {
@@ -160,6 +166,7 @@ class WebRTCManager {
             }
         }
 
+        // Join room via socket
         this.socket.emit('join', { room_id: this.roomId, password });
         return Promise.resolve();
     }
