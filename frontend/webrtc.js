@@ -55,7 +55,14 @@ class WebRTCManager {
 
     initSocket() {
         const socketUrl = window.SOCKET_URL || window.API_BASE || '';
-        this.socket = socketUrl ? io(socketUrl) : io();
+        const options = {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000
+        };
+        
+        this.socket = socketUrl ? io(socketUrl, options) : io(options);
         
         if (!this.socket) {
             console.error('Failed to initialize socket');
@@ -65,6 +72,11 @@ class WebRTCManager {
 
         this.socket.on('connect', () => {
             this.updateStatus('connected');
+        });
+        
+        this.socket.on('connect_error', (err) => {
+            console.error('Socket connection error:', err);
+            this.updateStatus('error: cannot connect to server');
         });
         this.socket.on('joined', () => {
             this.updateStatus('waiting for peer...');
