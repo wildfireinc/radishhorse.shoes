@@ -85,10 +85,13 @@
                 <div id="createRoomStatus" class="status" style="display: none; margin-bottom: 1rem;"></div>
                 <button type="submit" class="neon-button" id="createRoomBtn">create room</button>
             </form>
-            <div id="roomLinkSection" style="display: none; margin-top: 1rem;">
-                <div class="room-url" style="justify-content: center;">
-                    <input type="text" id="roomLink" readonly class="neon-input" style="max-width: 300px;">
-                    <button id="copyLinkBtn" class="neon-button small">copy link</button>
+            <div id="roomLinkSection" style="display: none; margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 600px; width: 100%;">
+                <div class="room-url">
+                    <input type="text" id="roomLink" readonly class="neon-input">
+                    <button id="copyLinkBtn" class="neon-button small">copy</button>
+                </div>
+                <div>
+                    <input type="text" id="roomPasswordDisplay" placeholder="password (optional)" readonly class="neon-input">
                 </div>
             </div>
         </div>
@@ -223,9 +226,13 @@
                         const roomLink = window.location.origin + `/room/${data.room_id}`;
                         const roomLinkInput = document.getElementById('roomLink');
                         const roomLinkSection = document.getElementById('roomLinkSection');
+                        const roomPasswordDisplay = document.getElementById('roomPasswordDisplay');
                         if (roomLinkInput && roomLinkSection) {
                             roomLinkInput.value = roomLink;
-                            roomLinkSection.style.display = 'block';
+                            roomLinkSection.style.display = 'grid';
+                        }
+                        if (roomPasswordDisplay) {
+                            roomPasswordDisplay.value = password || '(no password)';
                         }
                         if (createRoomBtn) {
                             createRoomBtn.disabled = false;
