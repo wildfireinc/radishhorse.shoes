@@ -141,17 +141,10 @@
                     }
 
                     if (res.ok && data.room_id) {
-                        showStatus('room created!');
-                        const link = window.location.origin + `/room/${data.room_id}`;
-                        const roomLinkInput = document.getElementById('roomLink');
-                        const roomPasswordDisplay = document.getElementById('roomPasswordDisplay');
-                        const roomLinkSection = document.getElementById('roomLinkSection');
-                        
-                        if (roomLinkInput) roomLinkInput.value = link;
-                        if (roomPasswordDisplay) roomPasswordDisplay.value = password || '(no password)';
-                        if (roomLinkSection) roomLinkSection.style.display = 'block';
-                        
-                        createRoomBtn.textContent = 'room created';
+                        showStatus('room created! redirecting...');
+                        setTimeout(() => {
+                            window.location.href = `/room/${data.room_id}`;
+                        }, 500);
                     } else {
                         showStatus('error: ' + (data.error || data.message || 'failed to create room'));
                         createRoomBtn.disabled = false;
