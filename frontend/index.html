@@ -108,6 +108,7 @@
 
         <div class="video-preview-container">
             <video id="localVideo" autoplay muted playsinline></video>
+            <div id="cameraStatus" class="status" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 0.5rem 1rem; border-radius: 4px; display: none;"></div>
         </div>
 
         <div class="controls">
@@ -150,33 +151,47 @@
         // Extend the success callback to initialize camera
         const originalSuccess = window.onTurnstileSuccess;
         window.onTurnstileSuccess = function(token) {
-            console.log('=== CALLBACK OVERRIDE FIRED ===');
             if (originalSuccess) {
-                console.log('Calling original callback');
                 originalSuccess(token);
             }
             turnstileToken = token || window.turnstileToken;
             // Initialize camera after a short delay to ensure DOM is ready
             setTimeout(() => {
-                console.log('Calling initCamera from callback');
                 initCamera().catch(err => {
-                    console.error('Camera init error in callback:', err);
-                    showStatus('error: camera initialization failed');
+                    showCameraStatus('error: camera initialization failed', true);
                 });
-            }, 300);
+            }, 500);
         };
 
+        function showCameraStatus(msg, isError = false) {
+            const statusEl = document.getElementById('cameraStatus');
+            if (statusEl) {
+                statusEl.textContent = msg;
+                statusEl.style.display = 'block';
+                statusEl.style.color = isError ? '#ff00ff' : '#00ffff';
+                if (!isError) {
+                    setTimeout(() => {
+                        statusEl.style.display = 'none';
+                    }, 3000);
+                }
+            }
+        }
+        
+        function hideCameraStatus() {
+            const statusEl = document.getElementById('cameraStatus');
+            if (statusEl) {
+                statusEl.style.display = 'none';
+            }
+        }
+
         async function initCamera() {
-            console.log('=== INIT CAMERA CALLED ===');
-            
             // Check if we already have a stream
             if (localStream) {
-                console.log('Reusing existing stream');
                 const video = document.getElementById('localVideo');
                 if (video && video.srcObject !== localStream) {
                     video.srcObject = localStream;
                     video.play().catch(err => {
-                        console.error('Error playing local video:', err);
+                        showCameraStatus('error: video playback failed', true);
                     });
                 }
                 return;
@@ -184,13 +199,13 @@
             
             // Check if mediaDevices is available
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                console.error('getUserMedia not supported');
-                showStatus('error: camera not supported');
+                showCameraStatus('error: camera not supported', true);
                 return;
             }
             
+            showCameraStatus('requesting camera access...', false);
+            
             try {
-                console.log('Requesting camera/mic access...');
                 localStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         width: { ideal: 1280 },
@@ -199,35 +214,41 @@
                     }, 
                     audio: true 
                 });
-                console.log('Camera/mic access granted, stream:', localStream);
+                
+                showCameraStatus('camera connected', false);
                 
                 const video = document.getElementById('localVideo');
                 if (video) {
-                    console.log('Setting video srcObject');
                     video.srcObject = localStream;
                     
                     // Wait for video to be ready
                     video.onloadedmetadata = () => {
-                        console.log('Video metadata loaded');
                         video.play().then(() => {
-                            console.log('Video playing');
+                            hideCameraStatus();
                         }).catch(err => {
-                            console.error('Error playing local video:', err);
-                            showStatus('error: video playback failed');
+                            showCameraStatus('error: video playback failed', true);
                         });
                     };
                     
                     // Also try playing immediately
-                    video.play().catch(err => {
-                        console.warn('Immediate play failed, will retry:', err);
+                    video.play().then(() => {
+                        hideCameraStatus();
+                    }).catch(err => {
+                        // Will retry on metadata load
                     });
                 } else {
-                    console.error('Video element not found!');
+                    showCameraStatus('error: video element not found', true);
                 }
             } catch (err) {
-                console.error('Error accessing camera:', err);
-                showStatus('error: camera access denied - ' + err.message);
-                setTimeout(hideStatus, 5000);
+                let errorMsg = 'error: camera access denied';
+                if (err.name === 'NotAllowedError') {
+                    errorMsg = 'error: camera permission denied';
+                } else if (err.name === 'NotFoundError') {
+                    errorMsg = 'error: no camera found';
+                } else if (err.name === 'NotReadableError') {
+                    errorMsg = 'error: camera in use';
+                }
+                showCameraStatus(errorMsg, true);
             }
         }
 
