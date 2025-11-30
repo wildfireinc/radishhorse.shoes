@@ -133,170 +133,41 @@
 
         let turnstileToken = window.turnstileToken || null;
         let localStream = null;
-        
-        // Override callback to initialize camera AFTER initCamera is defined
-        // Store original callback (defined in head)
-        const originalSuccess = window.onTurnstileSuccess;
-        
-        // Create new callback that does both UI and camera
-        window.onTurnstileSuccess = function(token) {
-            // Call original first (handles gate/main content)
-            if (originalSuccess && originalSuccess !== window.onTurnstileSuccess) {
-                originalSuccess(token);
-            }
-            turnstileToken = token || window.turnstileToken;
-            
-            // Now initialize camera - this function is defined below
-            setTimeout(() => {
-                if (!localStream) {
-                    showCameraStatus('initializing camera...', false);
-                    initCamera().catch(err => {
-                        showCameraStatus('error: camera initialization failed', true);
-                    });
-                }
-            }, 400);
-        };
 
-        function showCameraStatus(msg, isError = false) {
-            const statusEl = document.getElementById('cameraStatus');
-            if (statusEl) {
-                statusEl.textContent = msg;
-                statusEl.style.display = 'block';
-                statusEl.style.color = isError ? '#ff00ff' : '#00ffff';
-                if (!isError) {
-                    setTimeout(() => {
-                        statusEl.style.display = 'none';
-                    }, 3000);
-                }
-            }
-        }
-        
-        function hideCameraStatus() {
-            const statusEl = document.getElementById('cameraStatus');
-            if (statusEl) {
-                statusEl.style.display = 'none';
-            }
-        }
-
-        // Store original function reference
-        window.initCameraFunction = async function initCamera() {
-            showCameraStatus('initializing camera...', false);
-            
-            // Check if we already have a stream
+        async function initCamera() {
             if (localStream) {
                 const video = document.getElementById('localVideo');
                 if (video && video.srcObject !== localStream) {
                     video.srcObject = localStream;
-                    video.play().catch(err => {
-                        showCameraStatus('error: video playback failed', true);
-                    });
+                    video.play().catch(err => console.error('Error playing video:', err));
                 }
-                hideCameraStatus();
                 return;
             }
-            
-            // Check if mediaDevices is available
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showCameraStatus('error: camera not supported', true);
-                return;
-            }
-            
-            showCameraStatus('requesting camera access...', false);
             
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: 'user'
-                    }, 
+                    video: true, 
                     audio: true 
                 });
-                
-                showCameraStatus('camera connected', false);
-                
                 const video = document.getElementById('localVideo');
                 if (video) {
                     video.srcObject = localStream;
-                    
-                    // Wait for video to be ready
-                    video.onloadedmetadata = () => {
-                        video.play().then(() => {
-                            hideCameraStatus();
-                        }).catch(err => {
-                            showCameraStatus('error: video playback failed', true);
-                        });
-                    };
-                    
-                    // Also try playing immediately
-                    video.play().then(() => {
-                        hideCameraStatus();
-                    }).catch(err => {
-                        // Will retry on metadata load
-                    });
-                } else {
-                    showCameraStatus('error: video element not found', true);
+                    video.play().catch(err => console.error('Error playing video:', err));
                 }
             } catch (err) {
-                let errorMsg = 'error: camera access denied';
-                if (err.name === 'NotAllowedError') {
-                    errorMsg = 'error: camera permission denied';
-                } else if (err.name === 'NotFoundError') {
-                    errorMsg = 'error: no camera found';
-                } else if (err.name === 'NotReadableError') {
-                    errorMsg = 'error: camera in use';
-                }
-                showCameraStatus(errorMsg, true);
+                console.error('Error accessing camera:', err);
             }
-        };
-        
-        // Also expose as window.initCamera for callback
-        window.initCamera = window.initCameraFunction;
-        
-        // Fallback: if Turnstile already passed but camera didn't initialize
-        // Show manual start button for mobile browsers that require user gesture
-        const startCameraBtn = document.getElementById('startCameraBtn');
-        if (startCameraBtn) {
-            startCameraBtn.addEventListener('click', function() {
-                this.style.display = 'none';
-                initCamera().catch(err => {
-                    showCameraStatus('error: camera initialization failed', true);
-                });
-            });
         }
         
-        // Auto-try camera init, but show button if it fails (mobile gesture requirement)
-        if (window.turnstilePassed && !localStream) {
+        // Override callback to initialize camera
+        const originalSuccess = window.onTurnstileSuccess;
+        window.onTurnstileSuccess = function(token) {
+            if (originalSuccess) originalSuccess(token);
+            turnstileToken = token || window.turnstileToken;
             setTimeout(() => {
-                initCamera().catch(err => {
-                    // On mobile, getUserMedia might need user gesture
-                    if (startCameraBtn) {
-                        startCameraBtn.style.display = 'block';
-                        showCameraStatus('tap button to start camera', false);
-                    }
-                });
-            }, 500);
-        }
-        
-        // Wrap initCamera to show button on failure
-        const originalInitCamera = window.initCameraFunction;
-        if (originalInitCamera) {
-            window.initCamera = async function() {
-                try {
-                    await originalInitCamera();
-                    if (startCameraBtn) startCameraBtn.style.display = 'none';
-                } catch (err) {
-                    // If it fails and might be a gesture issue, show button
-                    if (err.name === 'NotAllowedError' || err.name === 'NotFoundError' || !localStream) {
-                        if (startCameraBtn) {
-                            startCameraBtn.style.display = 'block';
-                            showCameraStatus('tap button to start camera', false);
-                        }
-                    }
-                    throw err;
-                }
-            };
-        }
+                initCamera();
+            }, 100);
+        };
 
         // Room creation
         const createRoomForm = document.getElementById('createRoomForm');
