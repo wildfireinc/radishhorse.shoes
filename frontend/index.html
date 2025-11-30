@@ -183,7 +183,8 @@
             }
         }
 
-        async function initCamera() {
+        // Store original function reference
+        window.initCameraFunction = async function initCamera() {
             showCameraStatus('initializing camera...', false);
             
             // Check if we already have a stream
@@ -252,7 +253,10 @@
                 }
                 showCameraStatus(errorMsg, true);
             }
-        }
+        };
+        
+        // Also expose as window.initCamera for callback
+        window.initCamera = window.initCameraFunction;
         
         // Fallback: if Turnstile already passed but camera didn't initialize
         // Show manual start button for mobile browsers that require user gesture
@@ -279,23 +283,25 @@
             }, 500);
         }
         
-        // Also show button if camera init fails in the callback
-        const originalInitCamera = initCamera;
-        initCamera = async function() {
-            try {
-                await originalInitCamera();
-                if (startCameraBtn) startCameraBtn.style.display = 'none';
-            } catch (err) {
-                // If it fails and might be a gesture issue, show button
-                if (err.name === 'NotAllowedError' || err.name === 'NotFoundError') {
-                    if (startCameraBtn) {
-                        startCameraBtn.style.display = 'block';
-                        showCameraStatus('tap button to start camera', false);
+        // Wrap initCamera to show button on failure
+        const originalInitCamera = window.initCameraFunction;
+        if (originalInitCamera) {
+            window.initCamera = async function() {
+                try {
+                    await originalInitCamera();
+                    if (startCameraBtn) startCameraBtn.style.display = 'none';
+                } catch (err) {
+                    // If it fails and might be a gesture issue, show button
+                    if (err.name === 'NotAllowedError' || err.name === 'NotFoundError' || !localStream) {
+                        if (startCameraBtn) {
+                            startCameraBtn.style.display = 'block';
+                            showCameraStatus('tap button to start camera', false);
+                        }
                     }
+                    throw err;
                 }
-                throw err;
-            }
-        };
+            };
+        }
 
         // Room creation
         const createRoomForm = document.getElementById('createRoomForm');
