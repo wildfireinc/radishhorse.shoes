@@ -41,21 +41,8 @@
                 main.style.zIndex = '10';
             }
             
-            // Initialize camera immediately after showing content
-            setTimeout(() => {
-                if (typeof initCamera === 'function') {
-                    initCamera().catch(err => {
-                        // Error handling in initCamera
-                    });
-                } else {
-                    // If initCamera not defined yet, wait a bit more
-                    setTimeout(() => {
-                        if (typeof initCamera === 'function') {
-                            initCamera().catch(err => {});
-                        }
-                    }, 500);
-                }
-            }, 100);
+            // Signal that Turnstile passed - camera will be initialized by the override callback
+            window.turnstilePassed = true;
         };
         
         window.onTurnstileError = function(error) {
@@ -151,7 +138,7 @@
         let turnstileToken = window.turnstileToken || null;
         let localStream = null;
         
-        // Store the original callback and ensure camera init happens
+        // Override callback to initialize camera AFTER initCamera is defined
         const originalSuccess = window.onTurnstileSuccess;
         window.onTurnstileSuccess = function(token) {
             // Call original first (handles gate/main content)
@@ -160,16 +147,13 @@
             }
             turnstileToken = token || window.turnstileToken;
             
-            // The original callback already calls initCamera, but ensure it happens
-            // Double-check after a delay
+            // Now initialize camera - this function is defined below
             setTimeout(() => {
-                if (!localStream) {
-                    showCameraStatus('initializing camera...', false);
-                    initCamera().catch(err => {
-                        showCameraStatus('error: camera initialization failed', true);
-                    });
-                }
-            }, 800);
+                showCameraStatus('initializing camera...', false);
+                initCamera().catch(err => {
+                    showCameraStatus('error: camera initialization failed', true);
+                });
+            }, 300);
         };
 
         function showCameraStatus(msg, isError = false) {
@@ -264,19 +248,14 @@
             }
         }
         
-        // Also try to initialize camera when page loads (if gate already passed)
-        window.addEventListener('DOMContentLoaded', function() {
+        // Fallback: if Turnstile already passed but camera didn't initialize
+        if (window.turnstilePassed && !localStream) {
             setTimeout(() => {
-                const gate = document.getElementById('turnstileGate');
-                const main = document.getElementById('mainContent');
-                // If main is visible and gate is hidden, camera should be initialized
-                if (gate && gate.style.display === 'none' && main && main.style.display === 'flex') {
-                    if (!localStream) {
-                        initCamera();
-                    }
-                }
-            }, 1000);
-        });
+                initCamera().catch(err => {
+                    showCameraStatus('error: camera initialization failed', true);
+                });
+            }, 500);
+        }
 
         // Room creation
         const createRoomForm = document.getElementById('createRoomForm');
