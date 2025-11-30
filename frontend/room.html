@@ -231,9 +231,9 @@
                 chaosBtn.style.filter = '';
             }, 1500);
             
-            // Redirect to random meme link
+            // Open random meme link in new tab
             setTimeout(() => {
-                window.location.href = randomLink;
+                window.open(randomLink, '_blank');
             }, 1500);
         });
 
