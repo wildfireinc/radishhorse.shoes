@@ -63,6 +63,11 @@ body::before {
     animation: neon-pulse 2s ease-in-out infinite alternate;
     letter-spacing: 0.2em;
     text-transform: lowercase;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    padding: 0 1rem;
+    box-sizing: border-box;
 }
 
 .neon-logo.small {
@@ -407,7 +412,14 @@ body::before {
 
 @media (max-width: 768px) {
     .neon-logo {
-        font-size: 3rem;
+        font-size: 2rem;
+        letter-spacing: 0.1em;
+        line-height: 1.2;
+        padding: 0 0.5rem;
+    }
+    
+    .neon-logo.small {
+        font-size: 1.5rem;
     }
     
     .video-grid {
@@ -421,6 +433,27 @@ body::before {
     
     .neon-button {
         width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .neon-logo {
+        font-size: 1.5rem;
+        letter-spacing: 0.05em;
+        padding: 0 0.5rem;
+    }
+    
+    .neon-logo.small {
+        font-size: 1.2rem;
+    }
+    
+    .logo-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .gate-content {
+        gap: 2rem;
+        padding: 1rem;
     }
 }
 
