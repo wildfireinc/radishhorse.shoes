@@ -50,11 +50,6 @@
             </div>
         </div>
 
-        <div class="controls">
-            <button id="rouletteBtn" class="neon-button">meet a stranger</button>
-            <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
-        </div>
-
         <div class="status" id="status">connecting...</div>
         <a href="https://www.instagram.com/thewildfireway?igsh=MWZiamphY2pzdjN0Zw%3D%3D&utm_source=qr" target="_blank" class="creator-credit">creator: @thewildfireway</a>
     </div>
@@ -125,76 +120,6 @@
             const password = document.getElementById('passwordInput').value;
             document.getElementById('passwordSection').style.display = 'none';
             joinRoom(password);
-        });
-
-        document.getElementById('rouletteBtn').addEventListener('click', async () => {
-            try {
-                const res = await fetch(`${window.API_BASE}/api/roulette`);
-                const data = await res.json();
-                if (res.ok && data.room_id !== roomId) {
-                    window.location.href = `/${data.room_id}`;
-                } else {
-                    updateStatus('no other active rooms available');
-                }
-            } catch (err) {
-                updateStatus('error finding room');
-            }
-        });
-
-        const chaosMessages = ['respect', 'well ur a weird fella', 'knew this button will land', 'weird flex but ok', 'enjoyed it?'];
-        const memeLinks = [
-            'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du',
-            'https://youtu.be/dQw4w9WgXcQ',
-            'https://youtu.be/j5a0jTc9S10',
-            'https://youtu.be/9bZkp7q19f0',
-            'https://youtu.be/kJQP7kiw5Fk',
-            'https://youtu.be/fJ9rUzIMcZQ',
-            'https://youtu.be/L_jWHffIx5E'
-        ];
-
-        document.getElementById('chaosBtn').addEventListener('click', () => {
-            if (webrtc) webrtc.disconnect();
-            
-            const mode = Math.random();
-            const link = memeLinks[Math.floor(Math.random() * memeLinks.length)];
-            const shortLink = link.replace('https://youtu.be/', '').split('?')[0];
-            
-            if (mode < 0.4) {
-                updateStatus(chaosMessages[Math.floor(Math.random() * chaosMessages.length)]);
-            } else if (mode < 0.7) {
-                updateStatus('youtu.be/' + shortLink);
-            } else {
-                updateStatus(chaosMessages[Math.floor(Math.random() * chaosMessages.length)] + ' • youtu.be/' + shortLink);
-            }
-
-            const glitch = document.createElement('div');
-            glitch.className = 'glitch-overlay';
-            document.body.appendChild(glitch);
-
-            const rotation = (Math.random() - 0.5) * 10;
-            const hue = Math.random() * 360;
-            document.body.style.transform = `rotate(${rotation}deg) scale(${0.95 + Math.random() * 0.1})`;
-            document.body.style.filter = `hue-rotate(${hue}deg) brightness(${1 + Math.random()}) saturate(${1 + Math.random()})`;
-            document.body.style.animation = 'shake 0.5s';
-
-            const flash = document.createElement('div');
-            flash.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.5); z-index: 9999; pointer-events: none;';
-            document.body.appendChild(flash);
-
-            const btn = document.getElementById('chaosBtn');
-            btn.style.transform = `rotate(${Math.random() * 360}deg) scale(1.2)`;
-            btn.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
-
-            setTimeout(() => {
-                glitch.remove();
-                flash.remove();
-                document.body.style.transform = '';
-                document.body.style.filter = '';
-                document.body.style.animation = '';
-                btn.style.transform = '';
-                btn.style.filter = '';
-                window.open(link, '_blank');
-            }, 1500);
         });
 
         // Check if creator or guest
