@@ -167,6 +167,8 @@
                 showStatus('creating room...');
 
                 try {
+                    await window.BACKEND_CONFIG_READY;
+                    
                     if (!window.API_BASE) {
                         showStatus('error: backend not configured');
                         createRoomBtn.disabled = false;
@@ -264,6 +266,9 @@
                 showStatus('error: please complete verification first');
                 return;
             }
+            
+            await window.BACKEND_CONFIG_READY;
+            
             if (!window.API_BASE) {
                 showStatus('error: backend not configured');
                 return;
