@@ -147,11 +147,14 @@
 - Retro neon vaporwave aesthetic
 - Black background (#000)
 - Neon cyan (#00ffff), magenta (#ff00ff), pink (#ff00aa)
-- Glowing text effects, animations
+- Glowing text effects: `text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff`
+- Box shadows: `box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 10px rgba(0, 255, 255, 0.1)`
+- Hover: change to magenta (#ff00ff), increase glow
+- Font: Rajdhani (Google Fonts), lowercase text-transform
+- Buttons: transparent bg, neon border, same size, no transform on active
+- Inputs: dark bg rgba(0,0,0,0.5), neon border, same padding as buttons
 - Responsive design (mobile-friendly)
 - Local video flipped horizontally (mirror effect)
-- Buttons: same size, no transform on active/press
-- Inputs: same padding as buttons, consistent sizing
 
 ### Dependencies
 - Socket.IO client (CDN)
