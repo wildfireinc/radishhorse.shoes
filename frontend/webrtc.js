@@ -61,7 +61,9 @@ class WebRTCManager {
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
             timeout: 10000,
-            forceNew: true
+            forceNew: true,
+            path: '/socket.io/',
+            autoConnect: true
         };
         
         try {
@@ -81,7 +83,8 @@ class WebRTCManager {
         });
         
         this.socket.on('connect_error', (err) => {
-            this.updateStatus('error: cannot connect to ' + socketUrl + ' - check backend is running');
+            const errorMsg = err.message || 'unknown error';
+            this.updateStatus('error: cannot connect to ' + socketUrl + ' - ' + errorMsg);
         });
         
         this.socket.on('disconnect', (reason) => {
