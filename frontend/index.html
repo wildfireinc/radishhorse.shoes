@@ -264,6 +264,10 @@
                 showStatus('error: please complete verification first');
                 return;
             }
+            if (!window.API_BASE) {
+                showStatus('error: backend not configured');
+                return;
+            }
 
             const btn = document.getElementById('rouletteBtn');
             const chatOnly = document.getElementById('chatOnlyCheckbox').checked;
