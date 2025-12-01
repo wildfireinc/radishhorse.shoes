@@ -54,18 +54,24 @@ class WebRTCManager {
     }
 
     initSocket() {
-        const socketUrl = window.SOCKET_URL || window.API_BASE || '';
+        const socketUrl = window.SOCKET_URL || window.API_BASE || 'https://api.radishhorse.shoes';
         const options = {
             transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionAttempts: 5,
-            reconnectionDelay: 1000
+            reconnectionDelay: 1000,
+            timeout: 10000,
+            forceNew: true
         };
         
-        this.socket = socketUrl ? io(socketUrl, options) : io(options);
+        try {
+            this.socket = io(socketUrl, options);
+        } catch (err) {
+            this.updateStatus('error: failed to initialize socket - ' + (err.message || 'unknown error'));
+            return;
+        }
         
         if (!this.socket) {
-            console.error('Failed to initialize socket');
             this.updateStatus('error: failed to initialize socket');
             return;
         }
@@ -75,8 +81,7 @@ class WebRTCManager {
         });
         
         this.socket.on('connect_error', (err) => {
-            console.error('Socket connection error:', err);
-            this.updateStatus('error: cannot connect to server - check backend is running');
+            this.updateStatus('error: cannot connect to ' + socketUrl + ' - check backend is running');
         });
         
         this.socket.on('disconnect', (reason) => {

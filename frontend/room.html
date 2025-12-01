@@ -15,7 +15,14 @@
                 if (c.apiUrl) window.API_BASE = c.apiUrl;
                 if (c.socketUrl) window.SOCKET_URL = c.socketUrl;
             })
-            .catch(() => {});
+            .catch(() => {
+                // Keep defaults if config fails
+            });
+        
+        // Wait for config to load before initializing WebRTC
+        window.BACKEND_CONFIG_READY = new Promise((resolve) => {
+            setTimeout(resolve, 500);
+        });
     </script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
