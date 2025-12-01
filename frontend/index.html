@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>radishhorse.shoes</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script>
+        const configUrl = document.querySelector('meta[name="backend-config"]')?.content || '/api/config';
+        window.API_BASE = null;
+        window.SOCKET_URL = null;
+        window.TURNSTILE_SITE_KEY = null;
+        
+        window.onTurnstileSuccess = function(token) {
+            if (!token) return;
+            window.turnstileToken = token;
+            document.getElementById('turnstileGate').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'flex';
+            setTimeout(() => initCamera(), 200);
+        };
+        
+        window.onTurnstileError = () => {};
+        window.onTurnstileExpired = () => { window.turnstileToken = null; };
+        
+        window.BACKEND_CONFIG_READY = fetch(configUrl)
+            .then(r => r.ok ? r.json() : {})
+            .then(c => {
+                if (c.apiUrl) window.API_BASE = c.apiUrl;
+                if (c.socketUrl) window.SOCKET_URL = c.socketUrl;
+                if (c.turnstileSiteKey) window.TURNSTILE_SITE_KEY = c.turnstileSiteKey;
+                return c;
+            })
+            .catch(() => ({}));
+    </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+    <div id="turnstileGate" class="turnstile-gate">
+        <div class="gate-content">
+            <h1 class="neon-logo">radishhorse.shoes</h1>
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAACD2gD3et3LnZ5PS" data-callback="onTurnstileSuccess" data-error-callback="onTurnstileError" data-expired-callback="onTurnstileExpired"></div>
+        </div>
+    </div>
+
+    <div id="mainContent" class="container" style="display: none;">
+        <div class="logo-container">
+            <a href="/" class="neon-logo-link"><h1 class="neon-logo">radishhorse.shoes</h1></a>
+        </div>
+
+        <div class="video-preview-container">
+            <video id="localVideo" autoplay muted playsinline></video>
+        </div>
+
+        <div class="controls">
+            <button id="rouletteBtn" class="neon-button">meet a stranger</button>
+            <button id="chaosBtn" class="neon-button chaos">go fuck yourself</button>
+        </div>
+
+        <div class="room-creation">
+            <form id="createRoomForm">
+                <input type="text" id="roomPassword" placeholder="set password (optional)" class="neon-input">
+                <div id="createRoomStatus" class="status" style="display: none;"></div>
+                <button type="submit" id="createRoomBtn" class="neon-button">create room</button>
+            </form>
+            <label id="chatOnlyToggle" class="chat-only-toggle">
+                <input type="checkbox" id="chatOnlyCheckbox">
+                <span>chat only</span>
+            </label>
+        </div>
+
+        <a href="https://www.instagram.com/thewildfireway?igsh=MWZiamphY2pzdjN0Zw%3D%3D&utm_source=qr" target="_blank" class="creator-credit">creator: @thewildfireway</a>
+    </div>
+
+    <script src="/webrtc.js"></script>
+    <script>
+        let localStream = null;
+        let chatOnlyMode = false;
+
+        function showStatus(msg) {
+            const el = document.getElementById('createRoomStatus');
+            if (el) {
+                el.textContent = msg;
+                el.style.display = 'block';
+                setTimeout(() => el.style.display = 'none', 5000);
+            }
+        }
+
+        function updateCameraVisibility() {
+            const container = document.querySelector('.video-preview-container');
+            if (container) container.style.display = chatOnlyMode ? 'none' : 'block';
+        }
+
+        async function initCamera() {
+            if (chatOnlyMode) {
+                updateCameraVisibility();
+                return;
+            }
+            if (localStream) return;
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const video = document.getElementById('localVideo');
+                if (video) {
+                    video.srcObject = localStream;
+                    video.play().catch(() => {});
+                }
+            } catch (err) {
+                showStatus('camera error: ' + err.message);
+            }
+        }
+
+        document.getElementById('chatOnlyCheckbox').addEventListener('change', (e) => {
+            chatOnlyMode = e.target.checked;
+            updateCameraVisibility();
+        });
+
+        document.getElementById('chatOnlyToggle').addEventListener('click', (e) => {
+            e.preventDefault();
+            const checkbox = document.getElementById('chatOnlyCheckbox');
+            checkbox.checked = !checkbox.checked;
+            chatOnlyMode = checkbox.checked;
+            updateCameraVisibility();
+        });
+
+        document.getElementById('createRoomForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!window.turnstileToken) {
+                showStatus('error: please complete verification first');
+                return;
+            }
+            await window.BACKEND_CONFIG_READY;
+            if (!window.API_BASE) {
+                showStatus('error: backend not configured');
+                return;
+            }
+
+            const password = document.getElementById('roomPassword').value.trim() || null;
+            const chatOnly = document.getElementById('chatOnlyCheckbox').checked;
+            const btn = document.getElementById('createRoomBtn');
+            btn.disabled = true;
+            btn.textContent = 'creating...';
+            showStatus('creating room...');
+
+            try {
+                const res = await fetch(`${window.API_BASE}/api/create-room`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, turnstile_token: window.turnstileToken, chat_only: chatOnly })
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    let errorMsg = `server error ${res.status}`;
+                    try {
+                        const data = JSON.parse(text);
+                        errorMsg = data.error || data.message || errorMsg;
+                    } catch {
+                        if (text) errorMsg = text.substring(0, 100);
+                    }
+                    showStatus('error: ' + errorMsg);
+                    btn.disabled = false;
+                    btn.textContent = 'create room';
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.room_id) {
+                    const token = data.creator_token || Date.now().toString();
+                    sessionStorage.setItem(`creator_${data.room_id}`, token);
+                    sessionStorage.setItem(`mode_${data.room_id}`, chatOnly ? 'chat' : 'camera');
+                    showStatus('room created! redirecting...');
+                    setTimeout(() => window.location.href = `/${data.room_id}`, 500);
+                } else {
+                    showStatus('error: ' + (data.error || data.message || 'no room_id'));
+                    btn.disabled = false;
+                    btn.textContent = 'create room';
+                }
+            } catch (err) {
+                showStatus('error: ' + (err.message || 'network error'));
+                btn.disabled = false;
+                btn.textContent = 'create room';
+            }
+        });
+
+        let rouletteTimer = null;
+        document.getElementById('rouletteBtn').addEventListener('click', async () => {
+            if (!window.turnstileToken) {
+                showStatus('error: please complete verification first');
+                return;
+            }
+            await window.BACKEND_CONFIG_READY;
+            if (!window.API_BASE) {
+                showStatus('error: backend not configured');
+                return;
+            }
+
+            const btn = document.getElementById('rouletteBtn');
+            const chatOnly = document.getElementById('chatOnlyCheckbox').checked;
+            btn.disabled = true;
+            let seconds = 0;
+            btn.textContent = 'wait... 0s';
+
+            rouletteTimer = setInterval(() => {
+                seconds++;
+                btn.textContent = `wait... ${seconds}s`;
+            }, 1000);
+
+            try {
+                const res = await fetch(`${window.API_BASE}/api/roulette?chat_only=${chatOnly}`);
+                const data = await res.json();
+                clearInterval(rouletteTimer);
+
+                if (res.ok && data.room_id) {
+                    sessionStorage.setItem(`mode_${data.room_id}`, chatOnly ? 'chat' : 'camera');
+                    btn.textContent = 'found!';
+                    setTimeout(() => window.location.href = `/${data.room_id}`, 500);
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'meet a stranger';
+                    showStatus('no active rooms available');
+                }
+            } catch (err) {
+                clearInterval(rouletteTimer);
+                btn.disabled = false;
+                btn.textContent = 'meet a stranger';
+                showStatus('error: ' + (err.message || 'network error'));
+            }
+        });
+
+        const chaosMessages = ['respect', 'well ur a weird fella', 'knew this button will land', 'weird flex but ok', 'enjoyed it?'];
+        const memeLinks = [
+            'https://youtu.be/7CawoPNkY00?si=-J5KG2H022i-B4Du',
+            'https://youtu.be/dQw4w9WgXcQ',
+            'https://youtu.be/j5a0jTc9S10',
+            'https://youtu.be/9bZkp7q19f0',
+            'https://youtu.be/kJQP7kiw5Fk',
+            'https://youtu.be/fJ9rUzIMcZQ',
+            'https://youtu.be/L_jWHffIx5E'
+        ];
+
+        document.getElementById('chaosBtn').addEventListener('click', () => {
+            const mode = Math.random();
+            const link = memeLinks[Math.floor(Math.random() * memeLinks.length)];
+            const shortLink = link.replace('https://youtu.be/', '').split('?')[0];
+
+            if (mode < 0.4) {
+                showStatus(chaosMessages[Math.floor(Math.random() * chaosMessages.length)]);
+            } else if (mode < 0.7) {
+                showStatus('youtu.be/' + shortLink);
+                window.open(link, '_blank');
+            } else {
+                showStatus(chaosMessages[Math.floor(Math.random() * chaosMessages.length)] + ' • youtu.be/' + shortLink);
+                window.open(link, '_blank');
+            }
+
+            const glitch = document.createElement('div');
+            glitch.className = 'glitch-overlay';
+            document.body.appendChild(glitch);
+
+            const rotation = (Math.random() - 0.5) * 10;
+            const hue = Math.random() * 360;
+            document.body.style.transform = `rotate(${rotation}deg) scale(${0.95 + Math.random() * 0.1})`;
+            document.body.style.filter = `hue-rotate(${hue}deg) brightness(${1 + Math.random()}) saturate(${1 + Math.random()})`;
+            document.body.style.animation = 'shake 0.5s';
+
+            const flash = document.createElement('div');
+            flash.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.5); z-index: 9999; pointer-events: none;';
+            document.body.appendChild(flash);
+
+            const btn = document.getElementById('chaosBtn');
+            btn.style.transform = `rotate(${Math.random() * 360}deg) scale(1.2)`;
+            btn.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+
+            setTimeout(() => {
+                glitch.remove();
+                flash.remove();
+                document.body.style.transform = '';
+                document.body.style.filter = '';
+                document.body.style.animation = '';
+                btn.style.transform = '';
+                btn.style.filter = '';
+            }, 500);
+        });
+    </script>
+</body>
+</html>
+
