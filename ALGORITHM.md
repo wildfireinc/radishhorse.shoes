@@ -4,9 +4,17 @@
 
 ### Landing Page (`index.html`)
 1. Turnstile gate → verify → show main content
-2. Camera auto-starts
-3. Create room → redirect to `/{roomId}`
-4. Meet stranger → redirect to random `/{roomId}`
+2. Main page shows:
+   - Logo (clickable to home)
+   - Local video preview (user's camera)
+   - "meet a stranger" button (roulette - finds random room)
+   - "go fuck yourself" button (chaos button)
+   - Password input field (optional)
+   - "create room" button → redirects to `/{roomId}`
+   - "chat only" toggle (hides camera if enabled)
+3. Camera auto-starts on page load (unless chat only)
+4. Create room → stores creator token → redirects to `/{roomId}`
+5. Meet stranger → redirects to random `/{roomId}`
 
 ### Room Page (`room.html`)
 **One unified page for creator and guest:**
