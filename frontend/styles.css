@@ -170,6 +170,8 @@ body::before {
     transition: all 0.3s ease;
     text-shadow: 0 0 5px #00ffff;
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 10px rgba(0, 255, 255, 0.1);
+    min-width: 200px;
+    box-sizing: border-box;
 }
 
 .neon-button:hover {
@@ -178,6 +180,10 @@ body::before {
     text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff;
     box-shadow: 0 0 20px rgba(255, 0, 255, 0.5), inset 0 0 20px rgba(255, 0, 255, 0.2);
     transform: translateY(-2px);
+}
+
+.neon-button:active {
+    transform: none;
 }
 
 .neon-button.chaos:hover {
@@ -209,10 +215,12 @@ body::before {
 .room-creation .neon-input {
     width: 100%;
     margin-bottom: 1rem;
+    min-width: 200px;
 }
 
 .room-creation .neon-button {
     width: 100%;
+    min-width: 200px;
 }
 
 .neon-input {
