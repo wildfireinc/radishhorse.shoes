@@ -158,6 +158,7 @@
                 const password = document.getElementById('roomPassword')?.value.trim() || '';
                 const chatOnly = document.getElementById('chatOnlyCheckbox').checked;
                 createRoomBtn.disabled = true;
+                const originalText = createRoomBtn.textContent;
                 createRoomBtn.textContent = 'creating...';
                 showStatus('creating room...');
 
@@ -187,7 +188,7 @@
                     } catch (parseErr) {
                         showStatus('error: invalid server response');
                         createRoomBtn.disabled = false;
-                        createRoomBtn.textContent = 'create room';
+                        createRoomBtn.textContent = originalText;
                         return;
                     }
 
@@ -204,12 +205,12 @@
                     } else {
                         showStatus('error: ' + (data.error || data.message || 'failed to create room'));
                         createRoomBtn.disabled = false;
-                        createRoomBtn.textContent = 'create room';
+                        createRoomBtn.textContent = originalText;
                     }
                 } catch (err) {
                     showStatus('error: ' + (err.message || 'network error'));
                     createRoomBtn.disabled = false;
-                    createRoomBtn.textContent = 'create room';
+                    createRoomBtn.textContent = originalText;
                 }
             });
             
