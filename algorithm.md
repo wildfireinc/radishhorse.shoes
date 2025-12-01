@@ -150,6 +150,8 @@
 - Glowing text effects, animations
 - Responsive design (mobile-friendly)
 - Local video flipped horizontally (mirror effect)
+- Buttons: same size, no transform on active/press
+- Inputs: same padding as buttons, consistent sizing
 
 ### Dependencies
 - Socket.IO client (CDN)
