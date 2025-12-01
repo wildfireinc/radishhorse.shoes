@@ -6,11 +6,12 @@
     <title>radishhorse.shoes - Room</title>
     <link rel="stylesheet" href="/styles.css">
     <script>
-        window.API_BASE = 'https://api.radishhorse.shoes';
-        window.SOCKET_URL = 'https://api.radishhorse.shoes';
+        const configUrl = document.querySelector('meta[name="backend-config"]')?.content || '/api/config';
+        window.API_BASE = null;
+        window.SOCKET_URL = null;
         
         // Wait for config to load before initializing WebRTC
-        window.BACKEND_CONFIG_READY = fetch('https://api.radishhorse.shoes/api/config')
+        window.BACKEND_CONFIG_READY = fetch(configUrl)
             .then(r => r.ok ? r.json() : {})
             .then(c => {
                 if (c.apiUrl) window.API_BASE = c.apiUrl;
@@ -18,7 +19,6 @@
                 return c;
             })
             .catch(() => {
-                // Keep defaults if config fails
                 return {};
             });
     </script>
@@ -169,6 +169,10 @@
         if (creatorToken) {
             joinRoom();
         } else {
+            if (!window.API_BASE) {
+                updateStatus('error: backend not configured');
+                return;
+            }
             fetch(`${window.API_BASE}/api/room/${roomId}/exists`)
                 .then(res => {
                     if (!res.ok) {

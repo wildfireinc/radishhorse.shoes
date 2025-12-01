@@ -22,8 +22,9 @@ class WebRTCManager {
     }
 
     async getTurnConfig() {
+        if (!window.API_BASE) return;
         try {
-            const res = await fetch(`${window.API_BASE || ''}/api/turn-config`);
+            const res = await fetch(`${window.API_BASE}/api/turn-config`);
             const data = await res.json();
             this.turnConfig = data.urls?.length > 0 ? {
                 iceServers: [
@@ -54,7 +55,11 @@ class WebRTCManager {
     }
 
     initSocket() {
-        const socketUrl = window.SOCKET_URL || window.API_BASE || 'https://api.radishhorse.shoes';
+        if (!window.SOCKET_URL && !window.API_BASE) {
+            this.updateStatus('error: socket URL not configured');
+            return;
+        }
+        const socketUrl = window.SOCKET_URL || window.API_BASE;
         const options = {
             transports: ['websocket', 'polling'],
             reconnection: true,

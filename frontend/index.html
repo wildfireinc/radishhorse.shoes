@@ -6,9 +6,10 @@
     <title>radishhorse.shoes</title>
     <link rel="stylesheet" href="/styles.css">
     <script>
-        window.API_BASE = 'https://api.radishhorse.shoes';
-        window.SOCKET_URL = 'https://api.radishhorse.shoes';
-        window.TURNSTILE_SITE_KEY = '0x4AAAAAACD2gD3et3LnZ5PS';
+        const configUrl = document.querySelector('meta[name="backend-config"]')?.content || '/api/config';
+        window.API_BASE = null;
+        window.SOCKET_URL = null;
+        window.TURNSTILE_SITE_KEY = null;
         
         window.onTurnstileSuccess = function(token) {
             if (!token) return;
@@ -22,7 +23,7 @@
         window.onTurnstileError = () => {};
         window.onTurnstileExpired = () => { window.turnstileToken = null; };
         
-        window.BACKEND_CONFIG_READY = fetch('https://api.radishhorse.shoes/api/config')
+        window.BACKEND_CONFIG_READY = fetch(configUrl)
             .then(r => r.ok ? r.json() : {})
             .then(c => {
                 if (c.apiUrl) window.API_BASE = c.apiUrl;
@@ -166,7 +167,13 @@
                 showStatus('creating room...');
 
                 try {
-                    const apiUrl = window.API_BASE || 'https://api.radishhorse.shoes';
+                    if (!window.API_BASE) {
+                        showStatus('error: backend not configured');
+                        createRoomBtn.disabled = false;
+                        createRoomBtn.textContent = originalText;
+                        return;
+                    }
+                    const apiUrl = window.API_BASE;
                     const token = window.turnstileToken || turnstileToken;
                     if (!token) {
                         showStatus('error: no verification token');
@@ -228,7 +235,7 @@
                         createRoomBtn.textContent = originalText;
                     }
                 } catch (err) {
-                    showStatus('error: ' + (err.message || 'network error - check api.radishhorse.shoes'));
+                    showStatus('error: ' + (err.message || 'network error'));
                     createRoomBtn.disabled = false;
                     createRoomBtn.textContent = originalText;
                 }
