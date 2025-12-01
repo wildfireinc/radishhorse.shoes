@@ -102,6 +102,9 @@
         }
 
         async function joinRoom(password = '') {
+            // Wait for backend config to load
+            await window.BACKEND_CONFIG_READY;
+            
             const mode = sessionStorage.getItem(`mode_${roomId}`) || 'camera';
             const chatOnly = mode === 'chat';
             
@@ -113,9 +116,9 @@
             webrtc = new WebRTCManager(roomId, chatOnly);
             webrtc.onStatusChange = updateStatus;
             
-            // Wait for WebRTCManager to finish initialization
+            // Wait for WebRTCManager socket initialization
             let attempts = 0;
-            while (!webrtc.socket && attempts < 10) {
+            while (!webrtc.socket && attempts < 20) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 attempts++;
             }
@@ -126,14 +129,34 @@
                 return;
             }
             
+            // Wait for socket connection
+            if (!webrtc.socket.connected) {
+                updateStatus('connecting to server...');
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject('Connection timeout');
+                    }, 10000);
+                    
+                    webrtc.socket.once('connect', () => {
+                        clearTimeout(timeout);
+                        resolve();
+                    });
+                    
+                    webrtc.socket.once('connect_error', (err) => {
+                        clearTimeout(timeout);
+                        reject('Connection failed: ' + (err.message || 'unknown'));
+                    });
+                }).catch((err) => {
+                    updateStatus('error: ' + err);
+                    return;
+                });
+            }
+            
             webrtc.joinRoom(password).then(() => {
                 showRoomContent();
             }).catch((err) => {
                 const errMsg = err.message || err || 'failed to join';
                 updateStatus('error: ' + errMsg);
-                if (errMsg.includes('timeout') || errMsg.includes('connect')) {
-                    updateStatus('error: backend server not reachable - check api.radishhorse.shoes');
-                }
             });
         }
 
