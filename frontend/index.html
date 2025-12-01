@@ -71,7 +71,6 @@
         <a href="https://www.instagram.com/thewildfireway?igsh=MWZiamphY2pzdjN0Zw%3D%3D&utm_source=qr" target="_blank" class="creator-credit">creator: @thewildfireway</a>
     </div>
 
-    <script src="/webrtc.js"></script>
     <script>
         let localStream = null;
         let chatOnlyMode = false;
@@ -266,18 +265,12 @@
             flash.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.5); z-index: 9999; pointer-events: none;';
             document.body.appendChild(flash);
 
-            const btn = document.getElementById('chaosBtn');
-            btn.style.transform = `rotate(${Math.random() * 360}deg) scale(1.2)`;
-            btn.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
-
             setTimeout(() => {
                 glitch.remove();
                 flash.remove();
                 document.body.style.transform = '';
                 document.body.style.filter = '';
                 document.body.style.animation = '';
-                btn.style.transform = '';
-                btn.style.filter = '';
             }, 500);
         });
     </script>

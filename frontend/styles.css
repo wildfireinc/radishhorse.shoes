@@ -4,6 +4,8 @@
     box-sizing: border-box;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600&display=swap');
+
 body {
     font-family: 'Rajdhani', sans-serif;
     background: #000;
@@ -11,8 +13,6 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600&display=swap');
 
 .container {
     max-width: 1200px;
@@ -39,10 +39,6 @@ body {
 
 .gate-content {
     text-align: center;
-}
-
-.turnstile-container {
-    margin-top: 2rem;
 }
 
 .logo-container {
@@ -116,7 +112,6 @@ body {
     min-width: 200px;
     max-width: 400px;
     width: 100%;
-    box-sizing: border-box;
 }
 
 .neon-button:hover {
@@ -127,10 +122,7 @@ body {
 }
 
 .neon-button:active {
-    padding: 0.75rem 1.5rem;
-    min-width: 200px;
-    max-width: 400px;
-    width: 100%;
+    transform: none;
 }
 
 .neon-button.chaos:hover {
@@ -179,7 +171,6 @@ body {
     text-shadow: 0 0 5px #00ffff;
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 10px rgba(0, 255, 255, 0.1);
     transition: color 0.3s ease, border-color 0.3s ease, text-shadow 0.3s ease, box-shadow 0.3s ease;
-    box-sizing: border-box;
     min-width: 200px;
 }
 
