@@ -162,10 +162,7 @@
 
                 try {
                     const apiUrl = window.API_BASE || 'https://api.radishhorse.shoes';
-                    const endpoint = window.BACKEND_CONFIG?.endpoints?.createRoom || '/api/create-room';
-                    const fullUrl = apiUrl + endpoint;
-                    
-                    const res = await fetch(fullUrl, {
+                    const res = await fetch(`${apiUrl}/api/create-room`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
