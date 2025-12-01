@@ -13,6 +13,7 @@
         window.onTurnstileSuccess = function(token) {
             if (!token) return;
             window.turnstileToken = token;
+            turnstileToken = token;
             document.getElementById('turnstileGate').style.display = 'none';
             document.getElementById('mainContent').style.display = 'flex';
             setTimeout(() => initCamera(), 200);
@@ -162,12 +163,20 @@
 
                 try {
                     const apiUrl = window.API_BASE || 'https://api.radishhorse.shoes';
+                    const token = window.turnstileToken || turnstileToken;
+                    if (!token) {
+                        showStatus('error: no verification token');
+                        createRoomBtn.disabled = false;
+                        createRoomBtn.textContent = 'create room';
+                        return;
+                    }
+                    
                     const res = await fetch(`${apiUrl}/api/create-room`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
                             password: password || null, 
-                            turnstile_token: window.turnstileToken, 
+                            turnstile_token: token, 
                             chat_only: chatOnly 
                         })
                     });
