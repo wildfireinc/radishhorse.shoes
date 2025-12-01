@@ -181,17 +181,27 @@ body::before {
     border-color: #ff00ff;
     text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff;
     box-shadow: 0 0 20px rgba(255, 0, 255, 0.5), inset 0 0 20px rgba(255, 0, 255, 0.2);
-    transform: translateY(-2px);
 }
 
 .neon-button:active {
-    transform: none;
+    transform: none !important;
+    padding: 0.75rem 1.5rem !important;
+    min-width: 200px !important;
+    max-width: 400px !important;
+    width: 100% !important;
 }
 
 .neon-button.chaos:hover {
     color: #ff00aa;
     border-color: #ff00aa;
-    animation: shake 0.3s;
+}
+
+.neon-button.chaos:active {
+    transform: none !important;
+    padding: 0.75rem 1.5rem !important;
+    min-width: 200px !important;
+    max-width: 400px !important;
+    width: 100% !important;
 }
 
 .neon-button.small {
@@ -200,9 +210,9 @@ body::before {
 }
 
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+    0%, 100% { transform: none; }
+    25% { transform: none; }
+    75% { transform: none; }
 }
 
 .room-creation {
