@@ -181,6 +181,7 @@ body::before {
     border-color: #ff00ff;
     text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff;
     box-shadow: 0 0 20px rgba(255, 0, 255, 0.5), inset 0 0 20px rgba(255, 0, 255, 0.2);
+    transform: none;
 }
 
 .neon-button:active {
