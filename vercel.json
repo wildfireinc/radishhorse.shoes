@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/public/index.html"
+    },
+    {
+      "source": "/([a-zA-Z0-9-]+)",
+      "destination": "/public/room.html"
+    }
+  ]
+}
+

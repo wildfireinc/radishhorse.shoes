@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>room - radishhorse.shoes</title>
+  <meta name="api-base" content="https://api.radishhorse.shoes">
+  <meta name="socket-url" content="">
+  <meta name="turnstile-site-key" content="">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/app.js"></script>
+</head>
+<body>
+  <div class="room-container">
+    <!-- Header -->
+    <div class="room-header">
+      <a href="/" class="logo small">radishhorse.shoes</a>
+    </div>
+
+    <!-- Password Form (for guests) -->
+    <div id="password-form" class="password-form hidden">
+      <input type="password" id="room-password-input" placeholder="room password">
+      <button id="join-room-btn">join room</button>
+    </div>
+
+    <!-- Room Content (after joining) -->
+    <div id="room-content" class="hidden">
+      <!-- Video Grid -->
+      <div id="video-grid" class="video-grid"></div>
+
+      <!-- Room URL -->
+      <div class="room-url-container">
+        <input type="text" id="room-url-input" class="room-url-input" readonly>
+        <button id="copy-url-btn">copy</button>
+      </div>
+
+      <!-- Chat Container -->
+      <div class="chat-container">
+        <div id="chat-messages" class="chat-messages"></div>
+        <div class="chat-input-container">
+          <input type="text" id="chat-input" class="chat-input" placeholder="type a message..." maxlength="200">
+          <button id="chat-send-btn" class="chat-send-btn">send</button>
+        </div>
+      </div>
+
+      <!-- Status Message -->
+      <div id="status-message" class="status-message"></div>
+    </div>
+
+    <!-- Creator Credit -->
+    <div class="creator-credit">
+      <a href="https://instagram.com/thewildfireway" target="_blank">@thewildfireway</a>
+    </div>
+  </div>
+
+  <script src="/room.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>radishhorse.shoes</title>
+  <meta name="api-base" content="https://api.radishhorse.shoes">
+  <meta name="socket-url" content="">
+  <meta name="turnstile-site-key" content="">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="/app.js"></script>
+</head>
+<body>
+  <!-- Turnstile Gate -->
+  <div id="turnstile-gate" class="turnstile-gate">
+    <h1>radishhorse.shoes</h1>
+    <div id="turnstile-widget"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main-content" class="main-content">
+    <div class="container">
+      <a href="/" class="logo">radishhorse.shoes</a>
+
+      <!-- Video Preview -->
+      <video id="video-preview" class="video-preview" autoplay muted playsinline></video>
+
+      <!-- Actions -->
+      <div class="actions">
+        <div class="actions-row">
+          <button id="meet-stranger-btn">meet a stranger</button>
+          <button id="chaos-btn">go fuck yourself</button>
+        </div>
+        <div class="actions-row">
+          <input type="text" id="password-input" placeholder="password (optional)">
+          <button id="create-room-btn">create room</button>
+        </div>
+        <div class="checkbox-container">
+          <input type="checkbox" id="chat-only-checkbox">
+          <label for="chat-only-checkbox" class="checkbox-label">chat only</label>
+        </div>
+      </div>
+
+      <!-- Status Message -->
+      <div id="status-message" class="status-message"></div>
+
+      <!-- Creator Credit -->
+      <div class="creator-credit">
+        <a href="https://instagram.com/thewildfireway" target="_blank">@thewildfireway</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chaos Message -->
+  <div id="chaos-message" class="chaos-message hidden">
+    <h2 class="chaos-message-text"></h2>
+    <a href="#" class="chaos-message-link" target="_blank"></a>
+  </div>
+
+  <script src="/index.js"></script>
+</body>
+</html>
+
