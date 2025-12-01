@@ -24,13 +24,12 @@
         fetch('https://api.radishhorse.shoes/api/config')
             .then(r => r.ok ? r.json() : {})
             .then(c => {
-                console.log('Backend config:', c);
                 if (c.apiUrl) window.API_BASE = c.apiUrl;
                 if (c.socketUrl) window.SOCKET_URL = c.socketUrl;
                 if (c.turnstileSiteKey) window.TURNSTILE_SITE_KEY = c.turnstileSiteKey;
-                window.BACKEND_CONFIG = c; // Store full config
+                window.BACKEND_CONFIG = c;
             })
-            .catch(err => console.error('Config fetch error:', err));
+            .catch(() => {});
     </script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -166,16 +165,15 @@
                     const endpoint = window.BACKEND_CONFIG?.endpoints?.createRoom || '/api/create-room';
                     const fullUrl = apiUrl + endpoint;
                     
-                    console.log('Creating room at:', fullUrl);
-                    console.log('Payload:', { password, turnstile_token: window.turnstileToken, chat_only: chatOnly });
-                    
                     const res = await fetch(fullUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ password, turnstile_token: window.turnstileToken, chat_only: chatOnly })
+                        body: JSON.stringify({ 
+                            password: password || null, 
+                            turnstile_token: window.turnstileToken, 
+                            chat_only: chatOnly 
+                        })
                     });
-                    
-                    console.log('Response status:', res.status);
                     
                     let data;
                     try {
