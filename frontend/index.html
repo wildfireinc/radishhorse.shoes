@@ -22,15 +22,18 @@
         window.onTurnstileError = () => {};
         window.onTurnstileExpired = () => { window.turnstileToken = null; };
         
-        fetch('https://api.radishhorse.shoes/api/config')
+        window.BACKEND_CONFIG_READY = fetch('https://api.radishhorse.shoes/api/config')
             .then(r => r.ok ? r.json() : {})
             .then(c => {
                 if (c.apiUrl) window.API_BASE = c.apiUrl;
                 if (c.socketUrl) window.SOCKET_URL = c.socketUrl;
                 if (c.turnstileSiteKey) window.TURNSTILE_SITE_KEY = c.turnstileSiteKey;
                 window.BACKEND_CONFIG = c;
+                return c;
             })
-            .catch(() => {});
+            .catch(() => {
+                return {};
+            });
     </script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>

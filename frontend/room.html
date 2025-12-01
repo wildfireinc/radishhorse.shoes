@@ -9,20 +9,18 @@
         window.API_BASE = 'https://api.radishhorse.shoes';
         window.SOCKET_URL = 'https://api.radishhorse.shoes';
         
-        fetch('https://api.radishhorse.shoes/api/config')
+        // Wait for config to load before initializing WebRTC
+        window.BACKEND_CONFIG_READY = fetch('https://api.radishhorse.shoes/api/config')
             .then(r => r.ok ? r.json() : {})
             .then(c => {
                 if (c.apiUrl) window.API_BASE = c.apiUrl;
                 if (c.socketUrl) window.SOCKET_URL = c.socketUrl;
+                return c;
             })
             .catch(() => {
                 // Keep defaults if config fails
+                return {};
             });
-        
-        // Wait for config to load before initializing WebRTC
-        window.BACKEND_CONFIG_READY = new Promise((resolve) => {
-            setTimeout(resolve, 500);
-        });
     </script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
